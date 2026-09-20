@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { FileText, House, Key, TrendingUp } from "lucide-react";
 import { HeroSearch } from "@/components/site/hero-search";
 import { PropertyCard } from "@/components/site/property-card";
 import { ParallaxImage } from "@/components/site/parallax-image";
@@ -18,21 +19,25 @@ export const dynamic = "force-dynamic";
 
 const SERVICES = [
   {
+    icon: House,
     title: "Buyer Representation",
     description:
       "From discovery to closing, our agents provide end-to-end guidance with access to pre-market and exclusive listings.",
   },
   {
+    icon: TrendingUp,
     title: "Seller Strategy",
     description:
       "Maximize your property's value with our data-driven pricing, architectural staging, and targeted marketing.",
   },
   {
+    icon: Key,
     title: "Property Management",
     description:
       "Preserve and grow your investment with our concierge-level management services for luxury properties.",
   },
   {
+    icon: FileText,
     title: "Market Advisory",
     description:
       "Leverage our deep market intelligence for informed investment decisions and portfolio optimization.",
@@ -65,9 +70,6 @@ export default async function HomePage() {
         >
           <div className="flex items-end justify-between mb-16 px-[2%]">
             <div>
-              <p className="font-body text-xs tracking-label uppercase text-muted-foreground">
-                Featured
-              </p>
               <h2 className="font-display text-display-lg font-light mt-3">
                 Featured <span className="italic">Properties</span>
               </h2>
@@ -98,89 +100,98 @@ export default async function HomePage() {
           </div>
         </section>
 
-        <div className="hairline max-w-[1400px] mx-auto" />
+        {/* Neighborhoods — original: tinted band, full-height cards */}
+        <section className="py-24 md:py-40 bg-secondary/30">
+          <div className="px-[2%] max-w-[1400px] mx-auto">
+            <div className="text-center mb-16 md:mb-24">
+              <h2 className="font-display text-display-lg font-light mt-3">
+                Neighborhood <span className="italic">Expertise</span>
+              </h2>
+              <p className="font-body text-muted-foreground text-base mt-4 max-w-lg mx-auto leading-relaxed">
+                Decades of local knowledge distilled into unparalleled
+                guidance for the city&apos;s most coveted addresses.
+              </p>
+            </div>
 
-        {/* Neighborhoods */}
-        <section className="py-24 md:py-40 px-[2%] max-w-[1400px] mx-auto">
-          <div className="text-center mb-16 md:mb-24">
-            <p className="font-body text-xs tracking-label uppercase text-muted-foreground">
-              San Francisco
-            </p>
-            <h2 className="font-display text-display-lg font-light mt-3">
-              Neighborhood <span className="italic">Expertise</span>
-            </h2>
-            <p className="font-body text-sm text-muted-foreground mt-4 max-w-xl mx-auto leading-relaxed">
-              Decades of local knowledge distilled into unparalleled guidance
-              for the city&apos;s most coveted addresses.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12">
-            {NEIGHBORHOODS.map((neighborhood, index) => (
-              <Reveal key={neighborhood.name} delay={index * 0.1} duration={0.6}>
-                <Link
-                  href={`/properties?location=${encodeURIComponent(neighborhood.name)}`}
-                  className="group block relative overflow-hidden aspect-[4/3]"
-                >
-                  <img
-                    src={neighborhood.image}
-                    alt={`${neighborhood.name} neighborhood`}
-                    className="w-full h-full object-cover transition-transform duration-[1.2s] ease-out group-hover:scale-105"
-                    loading="lazy"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
-                  <div className="absolute bottom-0 left-0 right-0 p-6 md:p-8">
-                    <p className="font-body text-xs tracking-label uppercase text-white/60 mb-2">
-                      {countFor(neighborhood.name)}
-                    </p>
-                    <h3 className="font-display text-2xl md:text-3xl text-white font-light">
-                      {neighborhood.name}
-                    </h3>
-                    <p className="font-body text-sm text-white/70 mt-1">
-                      {neighborhood.tagline}
-                    </p>
-                  </div>
-                </Link>
-              </Reveal>
-            ))}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
+              {NEIGHBORHOODS.map((neighborhood, index) => (
+                <Reveal key={neighborhood.name} delay={index * 0.1} duration={0.6}>
+                  <Link
+                    href={`/properties?location=${encodeURIComponent(neighborhood.name)}`}
+                    className="group block"
+                  >
+                    <div className="relative h-[450px] md:aspect-auto md:min-h-[480px] overflow-hidden">
+                      <img
+                        src={neighborhood.image}
+                        alt={`${neighborhood.name} neighborhood`}
+                        className="w-full h-full object-cover transition-transform duration-[1.2s] group-hover:scale-105"
+                        loading="lazy"
+                      />
+                      <div className="absolute bottom-0 left-0 right-0 h-1/3 bg-gradient-to-t from-foreground to-transparent" />
+                      <div className="absolute bottom-0 left-0 right-0 p-6 md:p-8">
+                        <p className="font-body text-xs tracking-label uppercase text-white/60 mb-2">
+                          {countFor(neighborhood.name)}
+                        </p>
+                        <h3 className="font-display text-2xl md:text-3xl text-white font-light">
+                          {neighborhood.name}
+                        </h3>
+                        <p className="font-body text-sm text-white/70 mt-1">
+                          {neighborhood.tagline}
+                        </p>
+                      </div>
+                    </div>
+                  </Link>
+                </Reveal>
+              ))}
+            </div>
           </div>
         </section>
 
-        {/* Services */}
-        <section className="py-24 md:py-40 px-[2%] md:px-[2%] bg-foreground text-background">
-          <div className="max-w-[1400px] mx-auto px-[2%]">
-            <div className="flex flex-col md:flex-row md:items-end justify-between mb-16 md:mb-24 gap-8">
-              <div>
-                <p className="font-body text-xs tracking-label uppercase text-background/60">
-                  Services
-                </p>
-                <h2 className="font-display text-display-lg font-light mt-3">
-                  Buyer &amp; Seller{" "}
-                  <span className="italic">Services</span>
-                </h2>
-              </div>
-              <Link
-                href="/sell#contact"
-                className="font-body text-xs px-8 py-3 text-sm tracking-widest uppercase transition-all duration-500 rounded-full border border-background bg-transparent text-background hover:bg-background hover:text-foreground"
-              >
+        {/* Services — original: light two-column with icon list rows */}
+        <section className="py-24 md:py-40 px-[4%] md:px-[2%] max-w-[1400px] mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-16 md:gap-24">
+            <div>
+              <h2 className="font-display text-display-lg font-light mt-3">
+                Buyer &amp; Seller
+                <br />
+                <span className="italic">Services</span>
+              </h2>
+              <p className="font-body text-muted-foreground text-base mt-6 leading-snug max-w-md">
+                Whether acquiring your legacy residence or positioning your
+                property for the discerning market, our approach is both
+                artful and analytical.
+              </p>
+              <Link href="/sell#contact" className="ghost-btn inline-block mt-8 text-sm">
                 Learn More
               </Link>
             </div>
-            <p className="font-body text-sm text-background/70 max-w-2xl leading-relaxed mb-16 md:mb-24">
-              Whether acquiring your legacy residence or positioning your
-              property for the discerning market, our approach is both artful
-              and analytical.
-            </p>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-16">
+            <div className="space-y-0">
               {SERVICES.map((service, index) => (
-                <Reveal key={service.title} delay={index * 0.1} duration={0.6}>
-                  <h3 className="font-display text-2xl font-light">
-                    {service.title}
-                  </h3>
-                  <p className="font-body text-sm text-background/70 mt-3 leading-relaxed">
-                    {service.description}
-                  </p>
+                <Reveal
+                  key={service.title}
+                  delay={index * 0.1}
+                  duration={0.6}
+                  fromX
+                >
+                  <div className="py-8 border-b border-border/90 first:border-t">
+                    <div className="flex items-start gap-5">
+                      <div>
+                        <service.icon
+                          size={20}
+                          className="text-accent mt-1 flex-shrink-0"
+                          aria-hidden
+                        />
+                      </div>
+                      <div>
+                        <h3 className="font-display text-xl font-light mb-2">
+                          {service.title}
+                        </h3>
+                        <p className="font-body text-sm text-muted-foreground leading-relaxed">
+                          {service.description}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
                 </Reveal>
               ))}
             </div>
@@ -191,9 +202,6 @@ export default async function HomePage() {
         {agents.length > 0 && (
           <section className="py-24 md:py-40 px-[2%] max-w-[1400px] mx-auto">
             <div className="text-center mb-16 md:mb-24">
-              <p className="font-body text-xs tracking-label uppercase text-muted-foreground">
-                Team
-              </p>
               <h2 className="font-display text-display-lg font-light mt-3">
                 Featured <span className="italic">Advisors</span>
               </h2>

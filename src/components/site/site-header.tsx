@@ -72,12 +72,12 @@ export function SiteHeader() {
           <div className="flex items-center justify-between h-14 md:h-16">
             <Link href="/" aria-label="MAISON ESTATE — home" className="relative z-10">
               <span
-                className={`font-display text-2xl md:text-3xl font-light tracking-editorial ${logoPrimary}`}
+                className={`font-display text-2xl md:text-3xl 3xl:text-4xl font-light tracking-editorial ${logoPrimary}`}
               >
                 MAISON
               </span>
               <span
-                className={`font-display text-2xl md:text-3xl font-light tracking-editorial ${logoSecondary}`}
+                className={`font-display text-2xl md:text-3xl 3xl:text-4xl font-light tracking-editorial ${logoSecondary}`}
               >
                 {" ESTATE"}
               </span>

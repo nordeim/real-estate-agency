@@ -28,8 +28,9 @@ with the original app's demo user.
    inquiry pipeline.
 4. **IMPLEMENT** — Modular, typed, tested changes; follow existing patterns
    (DTOs from `queries.ts`, `ActionResult` from actions).
-5. **VERIFY** — `bun run lint && bun run typecheck && bun run test`, then
-   browser-verify the changed flow; check `dev.log` for runtime errors.
+5. **VERIFY** — `bun run lint && bun run typecheck && bun run test && bun run
+   test:e2e`, then browser-verify the changed flow; check `dev.log` for
+   runtime errors.
 6. **DELIVER** — Report what was verified, what was reasoned, what remains.
 
 ### Project-Specific Principles
@@ -84,6 +85,7 @@ bun run dev                     # http://localhost:3000
 | `bun run lint` | ESLint (Next.js core-web-vitals + TS rules) |
 | `bun run typecheck` | `tsc --noEmit` |
 | `bun run test` | Vitest unit/integration suite |
+| `bun run test:e2e` | Playwright e2e (builds a standalone server on :3003; `E2E_BASE_URL` reuses a running one) |
 | `bun run db:push` | Apply schema to the database |
 | `bun run db:seed` | Idempotent seed (12 properties, 5 advisors, 5 testimonials, demo user) |
 
@@ -92,19 +94,26 @@ bun run dev                     # http://localhost:3000
 ### Test Pyramid
 
 - **Unit**: pure helpers (`src/lib/format.test.ts`) — formatting, JSON-array
-  parsing, canonical constants.
-- **Integration**: Server Actions (`src/actions/inquiry.test.ts`) run against
-  the real SQLite DB — validation paths, rate limiting, not-found guards,
-  happy path persistence.
-- **E2E (manual/browser)**: hero search → filtered listings → property detail
-  → inquiry form; login with demo credentials; newsletter subscription;
-  mobile menu. Use a browser automation tool and confirm DB rows.
+  parsing, canonical constants and price-band contiguity.
+- **Integration**: Server Actions (`src/actions/inquiry.test.ts`) and the
+  query/filter engine (`src/lib/queries.test.ts`) run against the real SQLite
+  DB — validation paths, rate limiting, not-found guards, happy-path
+  persistence, filter semantics.
+- **E2E (Playwright, `e2e/`)**: `bun run test:e2e` builds the production
+  standalone server (isolated distDir via `PROD_DIST_DIR`) and drives a real
+  Chromium — font rendering regression guards, page titles, hero dropdown
+  behavior, filter navigation, inquiry/newsletter persistence to the DB,
+  login with the demo credentials, mobile menu. The db is symlinked into the
+  standalone tree so server and assertions share one SQLite file.
 
 ### Test Commands
 
 ```bash
-bun run test                          # all
-bunx vitest run src/lib/format.test.ts  # one file
+bun run test                            # all unit/integration
+bun run test:e2e                       # full e2e (production build)
+E2E_BASE_URL=http://localhost:3000 \
+  bun run test:e2e                     # e2e against a running dev server
+bunx vitest run src/lib/format.test.ts # one file
 ```
 
 ## Code Quality Standards

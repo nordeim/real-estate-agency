@@ -9,7 +9,7 @@ import { listPropertiesFiltered } from "@/lib/queries";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "Our Listings",
+  title: "Property Search",
   description:
     "Explore Maison Estate's curated collection of estates, penthouses, waterfront and modernist residences across San Francisco's most coveted neighborhoods.",
 };
@@ -37,36 +37,24 @@ export default async function PropertiesPage({ searchParams }: PageProps) {
       <SiteHeader />
       <main className="pt-24">
         <section className="px-[2%] max-w-[1400px] mx-auto">
-          <div className="pt-16 md:pt-24 mb-12 md:mb-16 px-[2%]">
-            <p className="font-body text-xs tracking-label uppercase text-muted-foreground">
-              Collection
-            </p>
-            <h1 className="font-display text-display-lg font-light mt-3">
-              Our <span className="italic">Listings</span>
+          <div className="pt-32 pb-24 px-[2%]">
+            <h1 className="font-display text-display-lg font-light mt-3 mb-12">
+              Our Listings
             </h1>
           </div>
 
           <div className="px-[2%]">
             <Suspense
               fallback={
-                <div className="h-12 rounded-full border border-border/50 animate-pulse" />
+                <div className="h-12 rounded-md border border-border/50 animate-pulse" />
               }
             >
               <PropertiesFilters total={properties.length} />
             </Suspense>
           </div>
 
-          <div className="mt-10 pb-24 md:pb-40 px-[2%]">
-            {properties.length === 0 ? (
-              <div className="text-center py-24">
-                <p className="font-display text-display-md font-light">
-                  No properties match your criteria
-                </p>
-                <p className="font-body text-sm text-muted-foreground mt-4">
-                  Try adjusting your filters
-                </p>
-              </div>
-            ) : (
+          <div className="pb-24 md:pb-40 px-[2%]">
+            {properties.length > 0 && (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 md:gap-12">
                 {properties.map((property) => (
                   <PropertyCard

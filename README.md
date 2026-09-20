@@ -5,7 +5,7 @@
 ![TypeScript](https://img.shields.io/badge/TypeScript-5-3178c6)
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind-4-38bdf8)
 ![Prisma](https://img.shields.io/badge/Prisma-6-2d3748)
-![Tests](https://img.shields.io/badge/tests-16%20passing-brightgreen)
+![Tests](https://img.shields.io/badge/tests-31%20vitest%20%C2%B7%2025%20e2e-brightgreen)
 
 > A production-grade, enterprise-polished clone of the MAISON ESTATE luxury
 > real-estate application — rebuilt on Next.js 16 with the original's exact
@@ -24,13 +24,13 @@ layer, validated Server Actions, tested domain logic, seeded demo content).
 
 | ✨ Feature | Description |
 | --- | --- |
-| 🎬 Video hero with sentence-style search | "I am looking for a **[Type]** in **[Location]** at the price of **[Price]**" — glassmorphic pill over the original's cinematic loop |
+| 🎬 Video hero with sentence-style search | "I am looking for a **[Type]** in **[Location]** at the price of **[Price]**" — glassmorphic pill with serif-italic underlined dropdowns over the original's cinematic loop |
 | 🏛️ Curated listings | 12 seeded luxury residences with galleries, stats (beds/baths/sqft/garage/year), features, virtual tours and Google Maps embeds |
 | 🔎 URL-driven filters | Search, location, type, price band and beds — shareable, back/forward-safe |
 | 🏷️ Rotating listing stamps | The signature animated "NEW" / "OPEN HOUSE" circular badges |
 | 👔 Advisors & testimonials | Featured advisors with credentials; auto-rotating success stories |
 | 📇 Lead capture | Inquiry form (tour / virtual tour / price / general) + newsletter, persisted via validated Server Actions with rate limiting |
-| 🔐 Credentials auth | NextAuth v4 sign-in seeded with the original demo user; optional Google OAuth |
+| 🔐 Credentials auth | Slate auth-card sign-in seeded with the original demo user; Google button surfaced with graceful unconfigured notice |
 | 📱 Responsive & accessible | Mobile overlay menu, keyboard-navigable controls, labeled forms, reduced-motion support |
 
 ## Architecture
@@ -47,7 +47,8 @@ layer, validated Server Actions, tested domain logic, seeded demo content).
 | Database | SQLite (dev) / PostgreSQL (prod) | — | Zero-config local; production path documented |
 | Auth | NextAuth v4 | 4 | Credentials provider + optional Google |
 | Validation | Zod | 4 | Server Action input contracts |
-| Tests | Vitest | 5 | Unit + action integration tests |
+| Unit/integration tests | Vitest | 5 | Unit + action/query integration tests (real DB) |
+| E2E tests | Playwright | 1.57 | Font/title/flow guards against the production build |
 | Toasts | sonner | 2 | Inquiry/newsletter feedback |
 
 ```mermaid
@@ -79,7 +80,8 @@ flowchart TB
 ```text
 📂 real-estate-agency/
 ├── 📂 docs/
-│   └── 📂 screenshots/          # Dev-server captures of every page
+│   └── 📂 screenshots/          # Production-build captures of every page
+├── 📂 e2e/                      # Playwright e2e suite (fonts, titles, hero, flows)
 ├── 📂 prisma/
 │   ├── 📄 schema.prisma         # Property/Agent/Testimonial/Inquiry/User models
 │   └── 📄 seed.ts               # Idempotent seed (listings, advisors, demo user)
@@ -90,17 +92,17 @@ flowchart TB
 │   │   ├── 📄 inquiry.ts        # Server Actions — the only mutation seam
 │   │   └── 📄 inquiry.test.ts   # Action integration tests (real DB)
 │   ├── 📂 app/
-│   │   ├── 📄 layout.tsx        # Fonts (Instrument Serif + Inter), metadata, toaster
+│   │   ├── 📄 layout.tsx        # Fonts on <html> (Instrument Serif + Inter), metadata, toaster
 │   │   ├── 📄 globals.css       # Design tokens — the MAISON design system
 │   │   ├── 📄 page.tsx          # Home (hero, featured, neighborhoods, services…)
 │   │   ├── 📂 properties/       # Listings + URL-driven filters
 │   │   ├── 📂 property/[id]/    # Detail: gallery, stats, features, map, inquiry
 │   │   ├── 📂 sell/             # Seller page + contact form
 │   │   ├── 📂 about/            # Legacy, advisors, credentials, community
-│   │   ├── 📂 login/            # Credentials sign-in (Google when configured)
+│   │   ├── 📂 login/            # Slate auth card (Google + credentials)
 │   │   └── 📂 privacy|terms|accessibility/
 │   ├── 📂 components/
-│   │   ├── 📂 site/             # Header, footer, hero, cards, forms, stamps…
+│   │   ├── 📂 site/             # Header, footer, hero, dropdowns, cards, forms, stamps…
 │   │   └── 📂 ui/               # shadcn primitives
 │   ├── 📂 lib/                  # db client, queries (DTOs), constants, format
 │   └── 📂 types/                # NextAuth augmentation
@@ -128,7 +130,7 @@ bun run dev
 
 1. Open <http://localhost:3000> — the video hero renders and "Featured
    Properties" shows six listings.
-2. `bun run test` prints `2 passed (2) / 16 passed (16)`.
+2. `bun run test` prints `3 passed (3) / 31 passed (31)`.
 3. Sign in at <http://localhost:3000/login> with
    `sepnetflix2023@outlook.com` / `$Abcd1234` — you are redirected home.
 
@@ -143,19 +145,25 @@ Demo credentials are seeded on purpose to mirror the original application.
 | `NEXTAUTH_URL` | ✅ | `http://localhost:3000` | Canonical origin for auth redirects |
 | `GOOGLE_CLIENT_ID` | ⬜ | — | Enables Google sign-in when set with the secret + flag |
 | `GOOGLE_CLIENT_SECRET` | ⬜ | — | Google OAuth client secret |
-| `NEXT_PUBLIC_GOOGLE_ENABLED` | ⬜ | `false` | Surfaces the "Continue with Google" button |
+| `NEXT_PUBLIC_GOOGLE_ENABLED` | ⬜ | `false` | Activates the Google sign-in action (the button is always visible; without keys it shows a setup notice) |
 | `NEXT_PUBLIC_SITE_URL` | ⬜ | `http://localhost:3000` | Metadata / OG origin |
 
 ## Testing
 
 ```bash
-bun run test        # unit + integration (16 tests)
+bun run test        # unit + integration (31 tests, real SQLite DB)
+bun run test:e2e   # Playwright e2e (25 tests) — builds & boots the production
+                   # standalone server on :3003; E2E_BASE_URL reuses a running one
 bun run lint        # ESLint — must be clean
 bun run typecheck   # tsc --noEmit — must be clean
 ```
 
-Integration tests run the real Server Actions against the local SQLite
-database (validation failures, rate limiting, not-found guards, persistence).
+Integration tests run the real Server Actions and query engine against the
+local SQLite database (validation failures, rate limiting, not-found guards,
+persistence, filter semantics). The e2e suite guards the font cascade, the
+original app's page titles, the hero popover dropdowns, and the full user
+flows — including inquiry/newsletter rows landing in the database and the
+demo login.
 
 ## Screenshots
 
@@ -169,6 +177,7 @@ database (validation failures, rate limiting, not-found guards, persistence).
 | About | `docs/screenshots/06-about-page.png` |
 | Login | `docs/screenshots/07-login-page.png` |
 | Mobile home | `docs/screenshots/08-mobile-homepage.png` |
+| 404 | `docs/screenshots/09-not-found-page.png` |
 
 ## Deployment
 
@@ -187,7 +196,8 @@ Any Node host works. For production:
 | --- | --- | --- |
 | Recon & design extraction | ✅ Complete | Original tokens, routes, entities, media |
 | Core build | ✅ Complete | All pages, actions, auth, seed data |
-| Quality gates | ✅ Complete | lint/typecheck clean, 16/16 tests, browser-verified flows |
+| Parity iteration | ✅ Complete | Font-cascade fix, hero popover dropdowns, section structures (neighborhoods/services/sell/about/footer/404/login), original page titles |
+| Quality gates | ✅ Complete | lint/typecheck clean, 31 unit + 25 e2e tests, production build verified |
 | Docs & delivery | ✅ Complete | README, AGENTS.md, CLAUDE.md, PAD, screenshots, .env.example |
 
 ## License

@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { notFound } from "next/navigation";
 import {
   ArrowLeft,
   Bath,
@@ -23,22 +22,31 @@ interface PageProps {
   params: Promise<{ id: string }>;
 }
 
-export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
-  const { id } = await params;
-  const property = await getPropertyById(id);
-  if (!property) return { title: "Property Not Found" };
-  return {
-    title: property.title,
-    description:
-      property.shortDescription ??
-      `${property.propertyType} in ${property.neighborhood ?? property.city} — ${formatPrice(property.price)}`,
-  };
-}
+// The original app keeps a single generic title for every property page.
+export const metadata: Metadata = {
+  title: "Property Detail",
+};
 
 export default async function PropertyDetailPage({ params }: PageProps) {
   const { id } = await params;
   const property = await getPropertyById(id);
-  if (!property) notFound();
+
+  // Inline editorial not-found state (matches the original app) — the
+  // global 404 page stays reserved for truly unknown routes.
+  if (!property) {
+    return (
+      <div>
+        <SiteHeader />
+        <main className="pt-32 px-6 md:px-12 max-w-[1400px] mx-auto text-center py-24">
+          <p className="font-display text-display-md">Property not found</p>
+          <Link href="/properties" className="ghost-btn inline-block mt-8">
+            Back to Collection
+          </Link>
+        </main>
+        <SiteFooter />
+      </div>
+    );
+  }
 
   const images =
     property.images.length > 0

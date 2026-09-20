@@ -3,23 +3,30 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { PROPERTY_TYPES, LOCATIONS, PRICE_BANDS } from "@/lib/constants";
+import { HeroDropdown } from "@/components/site/hero-dropdown";
+import {
+  HERO_DEFAULTS,
+  HERO_TYPE_OPTIONS,
+  HERO_LOCATION_OPTIONS,
+  HERO_PRICE_OPTIONS,
+} from "@/lib/constants";
 
 /**
  * Sentence-style hero search: "I am looking for a [Type] in [Location] at
- * the price of [Price]" — glassmorphic pill over the video hero.
+ * the price of [Price]" — glassmorphic pill over the video hero, with the
+ * original's custom popover dropdowns (serif italic underlined labels).
  */
 export function HeroSearch() {
   const router = useRouter();
-  const [type, setType] = useState("Any Type");
-  const [location, setLocation] = useState("All Locations");
-  const [price, setPrice] = useState("Any Price");
+  const [type, setType] = useState<string>(HERO_DEFAULTS.type);
+  const [location, setLocation] = useState<string>(HERO_DEFAULTS.location);
+  const [price, setPrice] = useState<string>(HERO_DEFAULTS.price);
 
   const onSearch = () => {
     const params = new URLSearchParams();
-    if (type !== "Any Type") params.set("type", type);
-    if (location !== "All Locations") params.set("location", location);
-    if (price !== "Any Price") params.set("price", price);
+    if (type !== HERO_DEFAULTS.type) params.set("type", type);
+    if (location !== HERO_DEFAULTS.location) params.set("location", location);
+    if (price !== HERO_DEFAULTS.price) params.set("price", price);
     const query = params.toString();
     router.push(query ? `/properties?${query}` : "/properties");
   };
@@ -53,67 +60,37 @@ export function HeroSearch() {
           </h1>
 
           <div className="flex flex-col items-start gap-4">
-            <form
-              onSubmit={(event) => {
-                event.preventDefault();
-                onSearch();
-              }}
-              className="flex flex-col md:inline-flex md:flex-row md:flex-wrap items-start md:items-center gap-2 md:gap-3 text-white font-body text-sm bg-black/20 backdrop-blur-md px-6 py-4 md:py-3 rounded-2xl md:rounded-full"
-            >
-              <div className="flex items-center gap-2 flex-wrap">
-                <label htmlFor="hero-type" className="text-white">
-                  I am looking for a
-                </label>
-                <select
-                  id="hero-type"
+            <div className="flex flex-col md:inline-flex md:flex-row md:flex-wrap items-start md:items-center gap-2 md:gap-3 text-white font-body text-sm bg-black/20 backdrop-blur-md px-6 py-4 md:py-3 rounded-2xl md:rounded-full">
+              <div className="flex items-center gap-2">
+                <span className="text-white">I am looking for a</span>
+                <HeroDropdown
+                  label="Property type"
+                  options={HERO_TYPE_OPTIONS}
                   value={type}
-                  onChange={(event) => setType(event.target.value)}
-                  className="bg-transparent border-none outline-none text-white cursor-pointer font-body text-sm underline decoration-white/40 underline-offset-4 hover:decoration-white transition-colors"
-                >
-                  {PROPERTY_TYPES.map((option) => (
-                    <option key={option} value={option} className="text-foreground">
-                      {option}
-                    </option>
-                  ))}
-                </select>
+                  onChange={setType}
+                />
               </div>
 
-              <div className="flex items-center gap-2 flex-wrap">
-                <label htmlFor="hero-location" className="text-white">
-                  in
-                </label>
-                <select
-                  id="hero-location"
+              <div className="flex items-center gap-2">
+                <span className="text-white">in</span>
+                <HeroDropdown
+                  label="Location"
+                  options={HERO_LOCATION_OPTIONS}
                   value={location}
-                  onChange={(event) => setLocation(event.target.value)}
-                  className="bg-transparent border-none outline-none text-white cursor-pointer font-body text-sm underline decoration-white/40 underline-offset-4 hover:decoration-white transition-colors"
-                >
-                  {LOCATIONS.map((option) => (
-                    <option key={option} value={option} className="text-foreground">
-                      {option}
-                    </option>
-                  ))}
-                </select>
+                  onChange={setLocation}
+                />
               </div>
 
-              <div className="flex items-center gap-2 flex-wrap">
-                <label htmlFor="hero-price" className="text-white">
-                  at the price of
-                </label>
-                <select
-                  id="hero-price"
+              <div className="flex items-center gap-2">
+                <span className="text-white">at the price of</span>
+                <HeroDropdown
+                  label="Price range"
+                  options={HERO_PRICE_OPTIONS}
                   value={price}
-                  onChange={(event) => setPrice(event.target.value)}
-                  className="bg-transparent border-none outline-none text-white cursor-pointer font-body text-sm underline decoration-white/40 underline-offset-4 hover:decoration-white transition-colors"
-                >
-                  {PRICE_BANDS.map((band) => (
-                    <option key={band.label} value={band.label} className="text-foreground">
-                      {band.label}
-                    </option>
-                  ))}
-                </select>
+                  onChange={setPrice}
+                />
               </div>
-            </form>
+            </div>
 
             <button type="button" onClick={onSearch} className="ghost-btn-light">
               Search Properties

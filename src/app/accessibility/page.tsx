@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { LegalPage } from "@/components/site/legal-page";
 
 export const metadata: Metadata = {
-  title: "Accessibility Statement",
+  title: "Accessibility",
   description: "Maison Estate's commitment to an accessible web experience.",
 };
 

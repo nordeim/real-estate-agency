@@ -10,7 +10,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { Search, X } from "lucide-react";
+import { Search } from "lucide-react";
 import {
   PROPERTY_TYPES,
   LOCATIONS,
@@ -19,9 +19,11 @@ import {
 } from "@/lib/constants";
 
 /**
- * URL-driven filter bar on /properties. Select values derive from
- * searchParams (single source of truth — shareable, back/forward works);
- * only the free-text search keeps local draft state until commit.
+ * Filter bar on /properties. The URL is the source of truth (shareable,
+ * back/forward-correct — an intentional improvement over the original's
+ * state-only filters; the hero search and neighborhood links land here
+ * with URL params either way). Only the free-text search keeps a local
+ * draft until commit.
  */
 export function PropertiesFilters({ total }: { total: number }) {
   const router = useRouter();
@@ -58,28 +60,15 @@ export function PropertiesFilters({ total }: { total: number }) {
     }
   };
 
-  const reset = () => {
-    setSearchDraft("");
-    router.push("/properties", { scroll: false });
-  };
-
-  const isFiltered =
-    filters.search !== "" ||
-    filters.type !== "All Types" ||
-    filters.location !== "All Locations" ||
-    filters.price !== "Any Price" ||
-    filters.beds !== "Any Beds";
-
-  const selectClasses =
-    "bg-transparent border-border/50 font-body text-sm h-10 md:h-12 rounded-full";
+  const selectClasses = "w-[180px] bg-transparent border-border font-body text-sm h-12";
 
   return (
-    <div className="w-full">
-      <div className="flex flex-col md:flex-row gap-3 md:gap-4">
-        <div className="relative flex-1">
+    <div className="space-y-6">
+      <div className="flex flex-wrap items-end gap-4">
+        <div className="relative flex-1 min-w-[200px]">
           <Search
             size={16}
-            className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none"
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none"
             aria-hidden
           />
           <Input
@@ -91,7 +80,7 @@ export function PropertiesFilters({ total }: { total: number }) {
             onBlur={commitSearch}
             placeholder="Search properties..."
             aria-label="Search properties"
-            className="bg-transparent border-border/50 font-body text-sm h-10 md:h-12 rounded-full pl-11"
+            className="pl-10 bg-transparent border-border font-body text-sm h-12"
           />
         </div>
 
@@ -100,7 +89,7 @@ export function PropertiesFilters({ total }: { total: number }) {
           onValueChange={(value) => pushFilters({ location: value })}
         >
           <SelectTrigger
-            className={`${selectClasses} md:w-44`}
+            className={selectClasses}
             aria-label="Location filter"
           >
             <SelectValue />
@@ -119,7 +108,7 @@ export function PropertiesFilters({ total }: { total: number }) {
           onValueChange={(value) => pushFilters({ type: value })}
         >
           <SelectTrigger
-            className={`${selectClasses} md:w-40`}
+            className={selectClasses}
             aria-label="Type filter"
           >
             <SelectValue />
@@ -138,7 +127,7 @@ export function PropertiesFilters({ total }: { total: number }) {
           onValueChange={(value) => pushFilters({ price: value })}
         >
           <SelectTrigger
-            className={`${selectClasses} md:w-40`}
+            className={selectClasses}
             aria-label="Price filter"
           >
             <SelectValue />
@@ -157,7 +146,7 @@ export function PropertiesFilters({ total }: { total: number }) {
           onValueChange={(value) => pushFilters({ beds: value })}
         >
           <SelectTrigger
-            className={`${selectClasses} md:w-32`}
+            className={selectClasses}
             aria-label="Bedrooms filter"
           >
             <SelectValue />
@@ -170,20 +159,9 @@ export function PropertiesFilters({ total }: { total: number }) {
             ))}
           </SelectContent>
         </Select>
-
-        {isFiltered && (
-          <button
-            type="button"
-            onClick={reset}
-            className="ghost-btn h-10 md:h-12 !py-0 flex items-center justify-center gap-2 font-body text-xs"
-            aria-label="Clear all filters"
-          >
-            <X size={14} aria-hidden /> Clear
-          </button>
-        )}
       </div>
 
-      <p className="font-body text-sm text-muted-foreground mt-4">
+      <p className="font-body text-sm text-muted-foreground">
         {total} {total === 1 ? "property" : "properties"} found
       </p>
     </div>

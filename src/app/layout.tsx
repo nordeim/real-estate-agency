@@ -17,8 +17,8 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: {
-    default: "MAISON ESTATE — Luxury Real Estate",
-    template: "%s | MAISON ESTATE",
+    default: "Real Estate Agency",
+    template: "%s | Real Estate Agency",
   },
   description:
     "Maison Estate is the definitive authority in luxury real estate. Discover curated collections of estates, penthouses, and waterfront residences in San Francisco's most coveted neighborhoods.",
@@ -31,7 +31,7 @@ export const metadata: Metadata = {
     "Maison Estate",
   ],
   openGraph: {
-    title: "MAISON ESTATE — Luxury Real Estate",
+    title: "Real Estate Agency",
     description:
       "Curated collections of estates, penthouses, and waterfront residences.",
     type: "website",
@@ -44,10 +44,16 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body
-        className={`${instrumentSerif.variable} ${inter.variable} antialiased bg-background text-foreground font-body`}
-      >
+    // Font variables live on <html> (not <body>): the :root tokens in
+    // globals.css (--font-display-src / --font-body) reference them, and
+    // custom-property substitution must resolve at the html level or the
+    // whole cascade collapses to the system sans-serif fallback.
+    <html
+      lang="en"
+      suppressHydrationWarning
+      className={`${instrumentSerif.variable} ${inter.variable}`}
+    >
+      <body className="antialiased bg-background text-foreground font-body">
         {children}
         <Toaster />
       </body>

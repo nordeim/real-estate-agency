@@ -1,4 +1,4 @@
-# MAISON ESTATE — Master Project Architecture Document (PAD) v1.0
+# MAISON ESTATE — Master Project Architecture Document (PAD) v1.1
 
 **Classification:** Internal Engineering Reference
 **Status:** DEFINITIVE, PRODUCTION-LOCKED BLUEPRINT
@@ -11,6 +11,7 @@
 
 | Version | Date | Change | Tag |
 | --- | --- | --- | --- |
+| 1.1 | 2026-09-20 | Parity iteration: font-cascade fix (F1), hero popover dropdowns, section reworks, original page titles, Playwright e2e suite, queries tests | [CA] |
 | 1.0 | 2026-09-20 | Initial as-built document from the completed build | [SYN] |
 
 Tags: `[RES]` Resolution · `[SR]` Scope Revision · `[CA]` Corrective Action · `[SYN]` Sync/Refresh · `[SAN]` Sanity Check · `[AUTH]` Authoritative Clarification
@@ -432,6 +433,11 @@ PostgreSQL provider switch is made.
 | Display / headings | Instrument Serif | 400 (+italic) | `--font-display-src`; sizes via `.text-display-xl` clamp(3rem→7rem) · `-lg` clamp(2.5→4.5rem) · `-md` clamp(2→3rem) · `-sm` clamp(1.5→2rem) |
 | Body / UI | Inter | 300–600 | `--font-body`; labels use `.tracking-label` (0.15em) uppercase |
 
+**v1.1 critical detail:** the next/font variable classes attach to `<html>`
+(not `<body>`) — the `:root` tokens substitute at the html level, and
+attaching them lower silently collapses the whole site to the system
+sans-serif fallback. Guarded by `e2e/fonts.spec.ts`.
+
 ### 5.2 Color Tokens (`:root`, HSL)
 
 | Token | Value | Use |
@@ -520,29 +526,37 @@ no privileged surface exists yet, so no permission matrix is warranted
 | --- | --- | --- | --- |
 | Unit | `src/lib/format.test.ts` | 9 | Price/sqft formatting, JSON-array parsing, canonical constants and price-band contiguity |
 | Integration (actions, real DB) | `src/actions/inquiry.test.ts` | 7 | Validation paths, unknown inquiry type, not-found property, rate limiting, happy-path persistence, newsletter sentinel behavior |
+| Integration (queries, real DB) | `src/lib/queries.test.ts` | 15 | Filter-engine semantics (type/location/price-band boundaries/beds/search, conjunctive combos), neighborhood counts, hero option derivation |
+| E2E (Playwright, real Chromium) | `e2e/*.spec.ts` | 25 | Font-cascade regression guard, original page titles, hero popover dropdowns + navigation params, property not-found inline state, filter URL round-trips, inquiry/newsletter persistence to the DB, demo login, mobile menu |
 
 ### 7.2 Test Patterns
 
 Tests import production modules directly (no mocking of the DB or actions) —
 asserting observable behavior: returned `ActionResult` codes and persisted
 rows. Unique emails per case prevent cross-test rate-limit coupling; the
-rate-limit test intentionally floods one address.
+rate-limit test intentionally floods one address. The e2e suite runs against
+the **production standalone build** by default (isolated distDir via
+`PROD_DIST_DIR`, static assets staged at `standalone/<distDir>/static`, db
+symlinked so the server and the test's PrismaClient share one SQLite file);
+`E2E_BASE_URL` reuses an already-running server (e.g. dev).
 
 ### 7.3 Coverage Thresholds
 
 Formal thresholds are not yet configured; the tested surface is the entire
-mutation seam plus all pure helpers. Adding thresholds (e.g. 85% lines on
-`lib/` + `actions/`) is a tracked task (see §10).
+mutation seam, the full query/filter engine, and the browser-level user
+flows. Adding thresholds (e.g. 85% lines on `lib/` + `actions/`) is a
+tracked task (see §10).
 
 ### 7.4 Pre-PR / Pre-Deploy Checklist
 
 1. `bun run lint` — zero errors/warnings.
 2. `bun run typecheck` — clean.
 3. `bun run test` — all passing.
-4. Browser-verify affected flows (hero search → filters → detail → inquiry;
+4. `bun run test:e2e` — all passing against the production build.
+5. Browser-verify affected flows (hero search → filters → detail → inquiry;
    login with demo credentials; newsletter; mobile menu).
-5. `tail dev.log` — no runtime errors from the session.
-6. `bun audit` before deploys.
+6. `tail dev.log` — no runtime errors from the session.
+7. `bun audit` before deploys.
 
 ---
 
@@ -631,7 +645,8 @@ never commit `.env`, `db/*.db`, logs, or scratch material.
 | Low | Rate limiter is in-process | Resets on restart; not shared across instances | Open (acceptable at demo scale; move to DB-backed window if deployed multi-node) |
 | Info | Signup ("Need an account?") renders as a link to /login | Matches original's template behavior; no registration flow | Accepted |
 | Info | framer-motion logs a scroll-container position warning in dev | Cosmetic console noise only | Accepted |
-| Info | Google OAuth hidden until env keys are set | Login shows credentials form only by default | By design (ADR-005) |
+| Info | Google button always visible; without env keys it shows a setup notice instead of failing | Matches the original's always-visible button | By design (ADR-005, v1.1) |
+| Info | Properties filters are URL-driven (original is state-driven after URL hydration) | Shareable/back-forward-correct views; entry points (hero, neighborhood cards) interplay identically | Intentional improvement (ADR-004) |
 
 ---
 
@@ -642,21 +657,25 @@ never commit `.env`, `db/*.db`, logs, or scratch material.
 | `src/app/globals.css` | The design system — tokens, brand classes, reduced-motion rule |
 | `src/app/page.tsx` | Home page composition (hero → parallax) |
 | `src/app/properties/page.tsx` | Listings page — awaits searchParams, renders filters + grid |
-| `src/app/property/[id]/page.tsx` | Detail page — gallery, stats, features, map, sticky inquiry |
-| `src/app/login/page.tsx` | Credentials sign-in (Google gated by env) |
+| `src/app/property/[id]/page.tsx` | Detail page — gallery, stats, features, map, sticky inquiry; inline not-found state |
+| `src/app/login/page.tsx` | Slate auth card (Google + credentials) |
+| `src/app/not-found.tsx` | The original's centered slate 404 inside the site chrome |
 | `src/actions/inquiry.ts` | The mutation seam — validation, rate limit, persistence |
 | `src/lib/queries.ts` | DTO types + all read functions + filter engine |
-| `src/lib/constants.ts` | Canonical filter lists, neighborhoods, site facts |
+| `src/lib/constants.ts` | Canonical filter lists, hero sentinels, neighborhoods, site facts |
 | `src/lib/db.ts` | Prisma client singleton |
 | `src/lib/auth.ts` | NextAuth options |
-| `src/components/site/site-header.tsx` | Scroll-hiding header, transparent-on-home, mobile menu |
+| `src/components/site/site-header.tsx` | Scroll-hiding header (transparent at top on all routes), mobile menu |
 | `src/components/site/hero-search.tsx` | Video hero + sentence-style search |
+| `src/components/site/hero-dropdown.tsx` | The hero's serif-italic popover dropdown |
 | `src/components/site/property-card.tsx` | Listing card with hover reveal + stamps |
 | `src/components/site/stamps.tsx` | Rotating NEW / OPEN HOUSE SVG badges |
 | `src/components/site/properties-filters.tsx` | URL-driven filter bar |
 | `src/components/site/inquiry-form.tsx` | Lead-capture form (action-wired) |
 | `prisma/schema.prisma` | Data model |
 | `prisma/seed.ts` | Idempotent seed + demo user |
+| `playwright.config.ts` | E2E config — production standalone webServer, PROD_DIST_DIR staging, db symlink |
+| `e2e/` | Playwright suite — fonts, titles, hero, property detail, flows |
 | `.env.example` | Environment contract |
 
 ---

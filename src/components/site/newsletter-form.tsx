@@ -37,7 +37,10 @@ export function NewsletterForm() {
           Thank you for subscribing.
         </p>
       ) : (
-        <form onSubmit={onSubmit} className="flex items-center gap-4 max-w-md">
+        <form
+          onSubmit={onSubmit}
+          className="flex items-center border-b border-background/20 pb-2 max-w-md"
+        >
           <label htmlFor="newsletter-email" className="sr-only">
             Your email address
           </label>
@@ -48,20 +51,20 @@ export function NewsletterForm() {
             value={email}
             onChange={(event) => setEmail(event.target.value)}
             placeholder="Your email address"
-            className="flex-1 bg-transparent border-b border-background/30 focus:border-background py-2 font-body text-sm text-background placeholder:text-background/50 outline-none transition-colors"
+            className="flex-1 bg-transparent font-body text-sm text-background placeholder:text-background/40 focus:outline-none"
           />
           <button
             type="submit"
             disabled={isPending}
             aria-label="Subscribe"
-            className="p-2 text-background/70 hover:text-background transition-colors disabled:opacity-50"
+            className="ml-4 text-background/60 hover:text-background transition-colors disabled:opacity-50"
           >
-            <ArrowRight size={20} />
+            <ArrowRight size={18} aria-hidden />
           </button>
         </form>
       )}
       {error && (
-        <p className="font-body text-xs text-destructive-foreground/80 mt-2" role="alert">
+        <p className="font-body text-xs text-background/60 mt-2" role="alert">
           {error}
         </p>
       )}

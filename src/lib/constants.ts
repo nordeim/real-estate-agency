@@ -87,3 +87,28 @@ export const SITE = {
   phoneHref: "tel:1234567890",
   email: "info@mysite.com",
 } as const;
+
+/**
+ * Hero search sentinels — the homepage sentence-style picker uses its own
+ * "Any X" defaults (the original app's wording); the /properties filter
+ * bar uses the "All X" wording above. Same values, different labels.
+ */
+export const HERO_DEFAULTS = {
+  type: "Any Type",
+  location: "Any Location",
+  price: "Any Price",
+} as const;
+
+export const HERO_TYPE_OPTIONS: readonly string[] = [
+  HERO_DEFAULTS.type,
+  ...PROPERTY_TYPES.filter((type) => type !== "All Types"),
+];
+
+export const HERO_LOCATION_OPTIONS: readonly string[] = [
+  HERO_DEFAULTS.location,
+  ...LOCATIONS.filter((location) => location !== "All Locations"),
+];
+
+export const HERO_PRICE_OPTIONS: readonly string[] = PRICE_BANDS.map(
+  (band) => band.label
+);

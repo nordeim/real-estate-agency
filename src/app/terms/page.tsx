@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { LegalPage } from "@/components/site/legal-page";
 
 export const metadata: Metadata = {
-  title: "Terms & Conditions",
+  title: "Terms",
   description: "The terms governing your use of the Maison Estate website and services.",
 };
 

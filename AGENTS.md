@@ -12,29 +12,42 @@ README or the Project Architecture Document (PAD).
 | Dev server | `bun run dev` (port 3000, logs to `dev.log`) |
 | Lint | `bun run lint` |
 | Typecheck | `bun run typecheck` |
-| Unit tests | `bun run test` (Vitest, real SQLite DB required) |
+| Unit/integration tests | `bun run test` (Vitest, real SQLite DB required) |
+| E2E tests | `bun run test:e2e` (Playwright — builds a standalone server on :3003; set `E2E_BASE_URL` to reuse a running one) |
 | Single test file | `bunx vitest run src/lib/format.test.ts` |
 | DB push schema | `bun run db:push` |
 | DB seed | `bun run db:seed` (idempotent — upserts by natural keys) |
 | Full reset | delete `db/custom.db` → `bun run db:push && bun run db:seed` |
 
-Gate order before considering work done: **lint → typecheck → test**, then
-browser-verify the affected flow (see Verification below).
+Gate order before considering work done: **lint → typecheck → test →
+test:e2e**, then browser-verify the affected flow (see Verification below).
 
 ## Stack facts agents get wrong
 
 - **Next.js 16 App Router.** `params` / `searchParams` are **Promises** — always
   `await` them in pages. Never read them synchronously.
+- **next/font variables must live on `<html>`, not `<body>`.** The `:root`
+  tokens in `globals.css` (`--font-display-src` / `--font-body`) reference the
+  next/font variables; custom-property substitution happens at the `html`
+  level, so attaching them to `<body>` silently collapses the whole site to
+  the system sans-serif fallback. Guarded by `e2e/fonts.spec.ts`.
+- **Custom distDir mirrors its name inside standalone output.** With
+  `PROD_DIST_DIR=.next-e2e`, the standalone server expects its files at
+  `standalone/.next-e2e/` (not `standalone/.next/`) — static assets must be
+  staged there (see `playwright.config.ts` webServer command).
 - **Prisma + SQLite.** Array columns are stored as JSON strings
   (`Property.images`, `Property.features`) — parse with
   `parseJsonArray()` from `src/lib/format.ts`; never `JSON.parse` inline.
 - **DB client** comes from `@/lib/db` (a globalThis singleton). Never
-  instantiate `new PrismaClient()` elsewhere.
+  instantiate `new PrismaClient()` elsewhere (the e2e DB-assertions in
+  `e2e/flows.spec.ts` are the one sanctioned exception — they must read the
+  exact file the server writes).
 - **Tailwind v4, CSS-first.** There is no `tailwind.config.js` and there must
   never be one. Tokens live in `src/app/globals.css` under `@theme inline` /
   `:root`. The brand classes `.ghost-btn`, `.ghost-btn-light`, `.hairline`,
   `.tracking-label`, `.tracking-editorial`, `.text-display-{xl,lg,md,sm}` are
   plain CSS defined in `globals.css` — use them instead of re-deriving values.
+  The `3xl` breakpoint (120rem) is declared in `@theme`.
 - **Fonts** load via `next/font/google` (Instrument Serif + Inter) and are
   exposed as `--font-display-src` / `--font-body`. Do not import Google Fonts
   by `<link>`.
@@ -53,6 +66,11 @@ browser-verify the affected flow (see Verification below).
   are canonical in `src/lib/constants.ts` — never hard-code them in
   components. The properties filter bar is URL-driven: filters derive from
   `searchParams`, commits push new URLs (shareable, back/forward-safe).
+- The homepage hero search uses its own "Any X" sentinels (`HERO_DEFAULTS`,
+  `HERO_*_OPTIONS`) and the custom popover dropdown
+  (`src/components/site/hero-dropdown.tsx`) — the properties page uses the
+  "All X" sentinels and Radix Selects. Same values, different labels —
+  this mirrors the original app.
 - Newsletter subscriptions persist as `Inquiry` rows with the sentinel fields
   `fullName: "Newsletter Subscriber"`, `inquiryType: "General"` — this mirrors
   the original app and is intentional.
@@ -62,7 +80,8 @@ browser-verify the affected flow (see Verification below).
 
 ## Verification
 
-- After any change, run the gate (`bun run lint && bun run typecheck && bun run test`).
+- After any change, run the gate
+  (`bun run lint && bun run typecheck && bun run test && bun run test:e2e`).
 - For UI changes, verify in a browser: home hero search → `/properties`
   filters → property detail → inquiry form (row lands in `Inquiry` table);
   `/login` with the demo credentials; footer newsletter.
@@ -72,8 +91,9 @@ browser-verify the affected flow (see Verification below).
 
 ## Repo hygiene
 
-- Never commit `.env` (only `.env.example`), `db/*.db`, `dev.log`, or
-  `reference-ui/` (recon scratch material).
+- Never commit `.env` (only `.env.example`), `db/*.db`, `dev.log`,
+  `reference-ui/` (recon scratch material), `test-results/`, or
+  `playwright-report/`.
 - Atomic conventional commits (`feat:`, `fix:`, `docs:` …), `main` branch only.
 - Media under `public/media/` is part of the design — treat image paths in
   seed data as load-bearing.
