@@ -60,7 +60,10 @@ export function PropertiesFilters({ total }: { total: number }) {
     }
   };
 
-  const selectClasses = "w-[180px] bg-transparent border-border font-body text-sm h-12";
+  // Per-filter widths as measured on the original app's filter bar.
+  const locationClasses = "w-[180px] bg-transparent border-border font-body text-sm h-12";
+  const filterClasses = "w-[160px] bg-transparent border-border font-body text-sm h-12";
+  const bedsClasses = "w-[120px] bg-transparent border-border font-body text-sm h-12";
 
   return (
     <div className="space-y-6">
@@ -89,7 +92,7 @@ export function PropertiesFilters({ total }: { total: number }) {
           onValueChange={(value) => pushFilters({ location: value })}
         >
           <SelectTrigger
-            className={selectClasses}
+            className={locationClasses}
             aria-label="Location filter"
           >
             <SelectValue />
@@ -108,7 +111,7 @@ export function PropertiesFilters({ total }: { total: number }) {
           onValueChange={(value) => pushFilters({ type: value })}
         >
           <SelectTrigger
-            className={selectClasses}
+            className={filterClasses}
             aria-label="Type filter"
           >
             <SelectValue />
@@ -127,7 +130,7 @@ export function PropertiesFilters({ total }: { total: number }) {
           onValueChange={(value) => pushFilters({ price: value })}
         >
           <SelectTrigger
-            className={selectClasses}
+            className={filterClasses}
             aria-label="Price filter"
           >
             <SelectValue />
@@ -146,7 +149,7 @@ export function PropertiesFilters({ total }: { total: number }) {
           onValueChange={(value) => pushFilters({ beds: value })}
         >
           <SelectTrigger
-            className={selectClasses}
+            className={bedsClasses}
             aria-label="Bedrooms filter"
           >
             <SelectValue />

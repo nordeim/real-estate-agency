@@ -2,6 +2,12 @@ import type { Metadata } from "next";
 import { Instrument_Serif, Inter } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
+import {
+  OG_IMAGE_PATH,
+  SITE_DESCRIPTION,
+  SITE_NAME,
+  siteUrl,
+} from "@/lib/seo";
 
 const instrumentSerif = Instrument_Serif({
   variable: "--font-instrument-serif",
@@ -16,12 +22,12 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(siteUrl()),
   title: {
-    default: "Real Estate Agency",
-    template: "%s | Real Estate Agency",
+    default: SITE_NAME,
+    template: `%s | ${SITE_NAME}`,
   },
-  description:
-    "Maison Estate is the definitive authority in luxury real estate. Discover curated collections of estates, penthouses, and waterfront residences in San Francisco's most coveted neighborhoods.",
+  description: SITE_DESCRIPTION,
   keywords: [
     "luxury real estate",
     "San Francisco homes",
@@ -30,11 +36,25 @@ export const metadata: Metadata = {
     "waterfront properties",
     "Maison Estate",
   ],
+  icons: { icon: { url: "/media/brand/favicon.svg", type: "image/svg+xml" } },
   openGraph: {
-    title: "Real Estate Agency",
-    description:
-      "Curated collections of estates, penthouses, and waterfront residences.",
+    title: SITE_NAME,
+    description: SITE_DESCRIPTION,
     type: "website",
+    url: "/",
+    siteName: SITE_NAME,
+    images: [{ url: OG_IMAGE_PATH, width: 1200, height: 630 }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: SITE_NAME,
+    description: SITE_DESCRIPTION,
+    images: [OG_IMAGE_PATH],
+  },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black",
+    title: SITE_NAME,
   },
 };
 

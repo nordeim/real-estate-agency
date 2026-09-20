@@ -5,7 +5,7 @@
 ![TypeScript](https://img.shields.io/badge/TypeScript-5-3178c6)
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind-4-38bdf8)
 ![Prisma](https://img.shields.io/badge/Prisma-6-2d3748)
-![Tests](https://img.shields.io/badge/tests-31%20vitest%20%C2%B7%2025%20e2e-brightgreen)
+![Tests](https://img.shields.io/badge/tests-42%20vitest%20%C2%B7%2033%20e2e-brightgreen)
 
 > A production-grade, enterprise-polished clone of the MAISON ESTATE luxury
 > real-estate application — rebuilt on Next.js 16 with the original's exact
@@ -31,6 +31,7 @@ layer, validated Server Actions, tested domain logic, seeded demo content).
 | 👔 Advisors & testimonials | Featured advisors with credentials; auto-rotating success stories |
 | 📇 Lead capture | Inquiry form (tour / virtual tour / price / general) + newsletter, persisted via validated Server Actions with rate limiting |
 | 🔐 Credentials auth | Slate auth-card sign-in seeded with the original demo user; Google button surfaced with graceful unconfigured notice |
+| 🔎 SEO & social layer | The original's full meta suite — canonical description, per-page OpenGraph + Twitter cards, SVG favicon, `sitemap.xml` (7 URLs) and minimal `robots.txt` |
 | 📱 Responsive & accessible | Mobile overlay menu, keyboard-navigable controls, labeled forms, reduced-motion support |
 
 ## Architecture
@@ -95,6 +96,8 @@ flowchart TB
 │   │   ├── 📄 layout.tsx        # Fonts on <html> (Instrument Serif + Inter), metadata, toaster
 │   │   ├── 📄 globals.css       # Design tokens — the MAISON design system
 │   │   ├── 📄 page.tsx          # Home (hero, featured, neighborhoods, services…)
+│   │   ├── 📄 sitemap.ts        # /sitemap.xml — the original's 7 public URLs
+│   │   ├── 📄 robots.ts         # /robots.txt — allow-all + sitemap reference
 │   │   ├── 📂 properties/       # Listings + URL-driven filters
 │   │   ├── 📂 property/[id]/    # Detail: gallery, stats, features, map, inquiry
 │   │   ├── 📂 sell/             # Seller page + contact form
@@ -103,8 +106,8 @@ flowchart TB
 │   │   └── 📂 privacy|terms|accessibility/
 │   ├── 📂 components/
 │   │   ├── 📂 site/             # Header, footer, hero, dropdowns, cards, forms, stamps…
-│   │   └── 📂 ui/               # shadcn primitives
-│   ├── 📂 lib/                  # db client, queries (DTOs), constants, format
+│   │   └── 📂 ui/               # The 4 shadcn primitives used (input, select, sonner, textarea)
+│   ├── 📂 lib/                  # db client, queries (DTOs), constants, format, SEO helper
 │   └── 📂 types/                # NextAuth augmentation
 ├── 📄 .env.example              # Every variable the app reads
 ├── 📄 AGENTS.md                 # Agent-facing instructions
@@ -130,7 +133,7 @@ bun run dev
 
 1. Open <http://localhost:3000> — the video hero renders and "Featured
    Properties" shows six listings.
-2. `bun run test` prints `3 passed (3) / 31 passed (31)`.
+2. `bun run test` prints `4 passed (4) / 42 passed (42)`.
 3. Sign in at <http://localhost:3000/login> with
    `sepnetflix2023@outlook.com` / `$Abcd1234` — you are redirected home.
 
@@ -146,13 +149,13 @@ Demo credentials are seeded on purpose to mirror the original application.
 | `GOOGLE_CLIENT_ID` | ⬜ | — | Enables Google sign-in when set with the secret + flag |
 | `GOOGLE_CLIENT_SECRET` | ⬜ | — | Google OAuth client secret |
 | `NEXT_PUBLIC_GOOGLE_ENABLED` | ⬜ | `false` | Activates the Google sign-in action (the button is always visible; without keys it shows a setup notice) |
-| `NEXT_PUBLIC_SITE_URL` | ⬜ | `http://localhost:3000` | Metadata / OG origin |
+| `NEXT_PUBLIC_SITE_URL` | ⬜ | `http://localhost:3000` | Metadata / OG / sitemap origin (`metadataBase`, absolute `robots.txt` sitemap URL) |
 
 ## Testing
 
 ```bash
-bun run test        # unit + integration (31 tests, real SQLite DB)
-bun run test:e2e   # Playwright e2e (25 tests) — builds & boots the production
+bun run test        # unit + integration (42 tests, real SQLite DB)
+bun run test:e2e   # Playwright e2e (33 tests) — builds & boots the production
                    # standalone server on :3003; E2E_BASE_URL reuses a running one
 bun run lint        # ESLint — must be clean
 bun run typecheck   # tsc --noEmit — must be clean
@@ -160,10 +163,11 @@ bun run typecheck   # tsc --noEmit — must be clean
 
 Integration tests run the real Server Actions and query engine against the
 local SQLite database (validation failures, rate limiting, not-found guards,
-persistence, filter semantics). The e2e suite guards the font cascade, the
-original app's page titles, the hero popover dropdowns, and the full user
-flows — including inquiry/newsletter rows landing in the database and the
-demo login.
+persistence, filter semantics, the SEO metadata helper). The e2e suite guards
+the font cascade, the original app's page titles, the hero popover dropdowns,
+the served meta layer (description, og:*, twitter:*, favicon), `sitemap.xml`
+and `robots.txt`, and the full user flows — including inquiry/newsletter rows
+landing in the database and the demo login.
 
 ## Screenshots
 
@@ -197,7 +201,8 @@ Any Node host works. For production:
 | Recon & design extraction | ✅ Complete | Original tokens, routes, entities, media |
 | Core build | ✅ Complete | All pages, actions, auth, seed data |
 | Parity iteration | ✅ Complete | Font-cascade fix, hero popover dropdowns, section structures (neighborhoods/services/sell/about/footer/404/login), original page titles |
-| Quality gates | ✅ Complete | lint/typecheck clean, 31 unit + 25 e2e tests, production build verified |
+| SEO/metadata parity | ✅ Complete | Full OG/Twitter meta layer, SVG favicon wiring, sitemap.xml, robots.txt, per-page metadata helper |
+| Quality gates | ✅ Complete | lint/typecheck clean, 42 unit + 33 e2e tests, production build verified |
 | Docs & delivery | ✅ Complete | README, AGENTS.md, CLAUDE.md, PAD, screenshots, .env.example |
 
 ## License

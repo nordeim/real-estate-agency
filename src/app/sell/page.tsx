@@ -4,12 +4,12 @@ import { Reveal } from "@/components/site/reveal";
 import { SiteHeader } from "@/components/site/site-header";
 import { SiteFooter } from "@/components/site/site-footer";
 import { InquiryFormWithToast } from "@/components/site/inquiry-form-with-toast";
+import { pageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: "Sell",
-  description:
-    "Sell your property with Maison Estate — expert market analysis, professional photography, targeted marketing, and seamless transaction management.",
-};
+  path: "/sell",
+});
 
 const COVERAGE = [
   "Expert market analysis and competitive pricing",

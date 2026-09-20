@@ -28,3 +28,12 @@ test("unknown property keeps the generic Property Detail title", async ({
   await page.goto("/property/does-not-exist");
   await expect(page).toHaveTitle("Property Detail | Real Estate Agency");
 });
+
+test("the 404 page quotes the missing route like the original", async ({
+  page,
+}) => {
+  await page.goto("/definitely-not-a-route");
+  await expect(
+    page.getByText('The page "/definitely-not-a-route" could not be found')
+  ).toBeVisible();
+});

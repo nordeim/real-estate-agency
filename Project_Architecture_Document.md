@@ -1,4 +1,4 @@
-# MAISON ESTATE — Master Project Architecture Document (PAD) v1.1
+# MAISON ESTATE — Master Project Architecture Document (PAD) v1.2
 
 **Classification:** Internal Engineering Reference
 **Status:** DEFINITIVE, PRODUCTION-LOCKED BLUEPRINT
@@ -11,6 +11,7 @@
 
 | Version | Date | Change | Tag |
 | --- | --- | --- | --- |
+| 1.2 | 2026-09-20 | SEO/metadata parity: `src/lib/seo.ts` + `pageMetadata()` on all pages, OG/Twitter layer, SVG favicon wiring, `sitemap.ts`/`robots.ts`, filter-width parity; scaffold purge (`/api` route, `tailwind.config.ts`, 44 unused ui components, hooks); SEO test suites (11 vitest + 8 e2e) | [CA] |
 | 1.1 | 2026-09-20 | Parity iteration: font-cascade fix (F1), hero popover dropdowns, section reworks, original page titles, Playwright e2e suite, queries tests | [CA] |
 | 1.0 | 2026-09-20 | Initial as-built document from the completed build | [SYN] |
 
@@ -525,9 +526,10 @@ no privileged surface exists yet, so no permission matrix is warranted
 | Level | Location | Count | Covers |
 | --- | --- | --- | --- |
 | Unit | `src/lib/format.test.ts` | 9 | Price/sqft formatting, JSON-array parsing, canonical constants and price-band contiguity |
+| Unit (SEO) | `src/lib/seo.test.ts` | 11 | Site constants verbatim from the original; `pageMetadata()` full OG/Twitter emission, per-page description pattern, og:image/url/site-name, twitter card |
 | Integration (actions, real DB) | `src/actions/inquiry.test.ts` | 7 | Validation paths, unknown inquiry type, not-found property, rate limiting, happy-path persistence, newsletter sentinel behavior |
 | Integration (queries, real DB) | `src/lib/queries.test.ts` | 15 | Filter-engine semantics (type/location/price-band boundaries/beds/search, conjunctive combos), neighborhood counts, hero option derivation |
-| E2E (Playwright, real Chromium) | `e2e/*.spec.ts` | 25 | Font-cascade regression guard, original page titles, hero popover dropdowns + navigation params, property not-found inline state, filter URL round-trips, inquiry/newsletter persistence to the DB, demo login, mobile menu |
+| E2E (Playwright, real Chromium) | `e2e/*.spec.ts` | 33 | Font-cascade regression guard, original page titles, hero popover dropdowns + navigation params, property not-found inline state, filter URL round-trips + per-filter widths, served meta layer (description/og:*/twitter:*/favicon), `sitemap.xml` + `robots.txt`, stray-API-route absence, inquiry/newsletter persistence to the DB, demo login, mobile menu |
 
 ### 7.2 Test Patterns
 
@@ -580,7 +582,7 @@ bun run start   # serves the standalone build
 | `GOOGLE_CLIENT_ID` | No | — | Google OAuth client id |
 | `GOOGLE_CLIENT_SECRET` | No | — | Google OAuth client secret |
 | `NEXT_PUBLIC_GOOGLE_ENABLED` | No | `false` | `"true"` surfaces the Google button on /login |
-| `NEXT_PUBLIC_SITE_URL` | No | `http://localhost:3000` | Metadata / OG origin |
+| `NEXT_PUBLIC_SITE_URL` | No | `http://localhost:3000` | Metadata `metadataBase`, OG/Twitter resolution, absolute `robots.txt` sitemap URL |
 
 ### 8.3 Docker Configuration
 
@@ -643,6 +645,8 @@ never commit `.env`, `db/*.db`, logs, or scratch material.
 | Low | No coverage thresholds wired into Vitest | Coverage unenforced | Open |
 | Low | `Inquiry.propertyId` is app-level (not a DB FK) | Orphaned rows possible if a property is deleted | Open (accepted under SQLite portability, ADR-003) |
 | Low | Rate limiter is in-process | Resets on restart; not shared across instances | Open (acceptable at demo scale; move to DB-backed window if deployed multi-node) |
+| Info | Original's og:description truncates to "…experien." (builder bug) | Clone ships the complete word — intentional fidelity deviation | By design (v1.2) |
+| Info | Next 16 renders sitemap priority `1.0` as `1` and normalizes `User-agent` casing | Byte-level diff vs original's sitemap/robots; semantically identical to crawlers | By design (v1.2) |
 | Info | Signup ("Need an account?") renders as a link to /login | Matches original's template behavior; no registration flow | Accepted |
 | Info | framer-motion logs a scroll-container position warning in dev | Cosmetic console noise only | Accepted |
 | Info | Google button always visible; without env keys it shows a setup notice instead of failing | Matches the original's always-visible button | By design (ADR-005, v1.1) |
@@ -660,6 +664,9 @@ never commit `.env`, `db/*.db`, logs, or scratch material.
 | `src/app/property/[id]/page.tsx` | Detail page — gallery, stats, features, map, sticky inquiry; inline not-found state |
 | `src/app/login/page.tsx` | Slate auth card (Google + credentials) |
 | `src/app/not-found.tsx` | The original's centered slate 404 inside the site chrome |
+| `src/lib/seo.ts` | SEO helper — site constants + `pageMetadata()` (full OG/Twitter emission) |
+| `src/app/sitemap.ts` | `/sitemap.xml` — the original's 7 public URLs with priorities |
+| `src/app/robots.ts` | `/robots.txt` — allow-all + absolute sitemap reference |
 | `src/actions/inquiry.ts` | The mutation seam — validation, rate limit, persistence |
 | `src/lib/queries.ts` | DTO types + all read functions + filter engine |
 | `src/lib/constants.ts` | Canonical filter lists, hero sentinels, neighborhoods, site facts |

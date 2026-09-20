@@ -5,14 +5,14 @@ import { SiteHeader } from "@/components/site/site-header";
 import { SiteFooter } from "@/components/site/site-footer";
 import { InquiryFormWithToast } from "@/components/site/inquiry-form-with-toast";
 import { listAllAgents } from "@/lib/queries";
+import { pageMetadata } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: "About",
-  description:
-    "For over two decades, Maison Estate has been the definitive authority in luxury real estate. Meet our advisors and discover our credentials.",
-};
+  path: "/about",
+});
 
 const CREDENTIALS = [
   { label: "Luxury Collection Specialist", year: "Since 2008" },

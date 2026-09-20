@@ -42,8 +42,9 @@ test:e2e**, then browser-verify the affected flow (see Verification below).
   instantiate `new PrismaClient()` elsewhere (the e2e DB-assertions in
   `e2e/flows.spec.ts` are the one sanctioned exception — they must read the
   exact file the server writes).
-- **Tailwind v4, CSS-first.** There is no `tailwind.config.js` and there must
-  never be one. Tokens live in `src/app/globals.css` under `@theme inline` /
+- **Tailwind v4, CSS-first.** There is no `tailwind.config.ts` and there
+  must never be one (it was deleted as inert scaffold weight). Tokens live
+  in `src/app/globals.css` under `@theme inline` /
   `:root`. The brand classes `.ghost-btn`, `.ghost-btn-light`, `.hairline`,
   `.tracking-label`, `.tracking-editorial`, `.text-display-{xl,lg,md,sm}` are
   plain CSS defined in `globals.css` — use them instead of re-deriving values.
@@ -53,7 +54,17 @@ test:e2e**, then browser-verify the affected flow (see Verification below).
   by `<link>`.
 - **Server-only mutations.** All writes go through Server Actions in
   `src/actions/` returning `ActionResult<T>` — never add REST route handlers
-  for UI mutations. Read paths are RSC query functions in `src/lib/queries.ts`.
+  for UI mutations. The only route handler is NextAuth under
+  `/api/auth/[...nextauth]` (a stray scaffold `/api` JSON route was removed —
+  keep it that way). Read paths are RSC query functions in `src/lib/queries.ts`.
+- **Metadata/SEO lives in `src/lib/seo.ts`** — pages call
+  `pageMetadata({ title, path })` which emits the FULL openGraph/twitter
+  objects (Next replaces a segment's objects wholesale, so a partial
+  override would drop the root fields). `/sitemap.xml` and `/robots.txt`
+  come from `src/app/sitemap.ts` / `src/app/robots.ts` (no static files —
+  they would conflict). Note: Next 16's `MetadataRoute.Sitemap` key is
+  `changeFrequency` (a `changefreq` key is silently dropped), and the
+  serializer renders priority `1.0` as `1`.
 - **framer-motion needs a client boundary.** In Server Components use the
   `<Reveal>` wrapper (`src/components/site/reveal.tsx`); only `"use client"`
   components may import `motion` directly.
@@ -94,6 +105,9 @@ test:e2e**, then browser-verify the affected flow (see Verification below).
 - Never commit `.env` (only `.env.example`), `db/*.db`, `dev.log`,
   `reference-ui/` (recon scratch material), `test-results/`, or
   `playwright-report/`.
+- `src/components/ui/` intentionally contains ONLY the four primitives the
+  app uses (input, select, sonner, textarea). Do not re-add the full shadcn
+  catalog — 44 unused components were deleted as scaffold weight.
 - Atomic conventional commits (`feat:`, `fix:`, `docs:` …), `main` branch only.
 - Media under `public/media/` is part of the design — treat image paths in
   seed data as load-bearing.

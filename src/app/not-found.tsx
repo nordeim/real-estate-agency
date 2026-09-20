@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Home } from "lucide-react";
 import { SiteHeader } from "@/components/site/site-header";
 import { SiteFooter } from "@/components/site/site-footer";
+import { NotFoundRoute } from "@/components/site/not-found-route";
 
 /**
  * Not-found page — reproduces the original app's standard 404 layout
@@ -23,10 +24,7 @@ export default function NotFound() {
                 <h2 className="text-2xl font-medium text-slate-800">
                   Page Not Found
                 </h2>
-                <p className="text-slate-600 leading-relaxed">
-                  The page you are looking for could not be found in this
-                  application.
-                </p>
+                <NotFoundRoute />
               </div>
               <div className="pt-6">
                 <Link

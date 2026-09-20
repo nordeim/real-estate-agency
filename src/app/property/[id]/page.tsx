@@ -15,6 +15,7 @@ import { PropertyGallery } from "@/components/site/property-gallery";
 import { InquiryFormWithToast } from "@/components/site/inquiry-form-with-toast";
 import { getPropertyById } from "@/lib/queries";
 import { formatPrice } from "@/lib/format";
+import { pageMetadata } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
 
@@ -23,9 +24,10 @@ interface PageProps {
 }
 
 // The original app keeps a single generic title for every property page.
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: "Property Detail",
-};
+  path: "/property/[id]",
+});
 
 export default async function PropertyDetailPage({ params }: PageProps) {
   const { id } = await params;

@@ -5,14 +5,14 @@ import { SiteFooter } from "@/components/site/site-footer";
 import { PropertyCard } from "@/components/site/property-card";
 import { PropertiesFilters } from "@/components/site/properties-filters";
 import { listPropertiesFiltered } from "@/lib/queries";
+import { pageMetadata } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: "Property Search",
-  description:
-    "Explore Maison Estate's curated collection of estates, penthouses, waterfront and modernist residences across San Francisco's most coveted neighborhoods.",
-};
+  path: "/properties",
+});
 
 interface PageProps {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
