@@ -1,4 +1,4 @@
-# MAISON ESTATE — Master Project Architecture Document (PAD) v1.2
+# MAISON ESTATE — Master Project Architecture Document (PAD) v1.3
 
 **Classification:** Internal Engineering Reference
 **Status:** DEFINITIVE, PRODUCTION-LOCKED BLUEPRINT
@@ -11,6 +11,7 @@
 
 | Version | Date | Change | Tag |
 | --- | --- | --- | --- |
+| 1.3 | 2026-09-20 | Interactive-state parity: five-view auth card (reset/check-email/create-account/verify-email) with `src/actions/auth.ts` + User verification columns; zero-match empty state + Clear Filters on /properties; login error alert + newsletter success copy alignment; sonner Toaster scoped to /login only (inquiry toast becomes an intentional no-op, mirroring the original); auth test suites (12 vitest + 9 e2e) | [CA] |
 | 1.2 | 2026-09-20 | SEO/metadata parity: `src/lib/seo.ts` + `pageMetadata()` on all pages, OG/Twitter layer, SVG favicon wiring, `sitemap.ts`/`robots.ts`, filter-width parity; scaffold purge (`/api` route, `tailwind.config.ts`, 44 unused ui components, hooks); SEO test suites (11 vitest + 8 e2e) | [CA] |
 | 1.1 | 2026-09-20 | Parity iteration: font-cascade fix (F1), hero popover dropdowns, section reworks, original page titles, Playwright e2e suite, queries tests | [CA] |
 | 1.0 | 2026-09-20 | Initial as-built document from the completed build | [SYN] |
@@ -333,6 +334,10 @@ erDiagram
         string name
         string passwordHash
         string role
+        boolean verified
+        string verificationCodeHash
+        datetime verificationCodeExpiresAt
+        int verificationAttemptsLeft
         datetime createdAt
     }
     Property {
@@ -499,10 +504,28 @@ limiter map in `src/actions/inquiry.ts`.
 ### 6.3 AuthN / AuthZ
 
 Authentication: NextAuth v4 Credentials provider (email + bcrypt check
-against `User`); optional Google provider enabled only when both env keys
-exist and `NEXT_PUBLIC_GOOGLE_ENABLED="true"`. Sessions: JWT strategy with
-`sub` carrying the user id; pages use no session-gated views — matching the
-original app, where the public site is identical signed-in or not.
+against `User`, **requiring `verified = true`**); optional Google provider
+enabled only when both env keys exist and `NEXT_PUBLIC_GOOGLE_ENABLED="true"`.
+Sessions: JWT strategy with `sub` carrying the user id; pages use no
+session-gated views — matching the original app, where the public site is
+identical signed-in or not.
+
+The login card reproduces the original's five views — sign-in ·
+reset-password (→ check-email) · create-account (→ verify-email). Backing
+actions in `src/actions/auth.ts`: sign-up creates an unverified `User` and
+issues a bcrypt-hashed 6-digit code (15-minute expiry, 5-attempt budget);
+`verifyEmailWithCode` compares, decrements, and on success verifies + clears
+the challenge, after which the client signs in with the captured
+credentials; `resendVerificationCode` re-issues and restores the budget;
+`requestPasswordReset` validates format and always succeeds (no
+user-existence oracle — the original shows "Check your email" for any
+well-formed address). Error copy is literal from the original. Outside
+production the sign-up/resend actions return `devCode` (the plaintext code)
+so dev and the test suites can complete verification without a mail
+provider; production never returns it. Mail transport is deliberately out
+of scope — no completion route past "Check your email" is observable on
+the original.
+
 Authorization: single `role` column reserved for future back-office gating;
 no privileged surface exists yet, so no permission matrix is warranted
 (YAGNI — revisit if an admin area is added).
@@ -514,6 +537,8 @@ no privileged surface exists yet, so no permission matrix is warranted
 | Form spam / flooding | Rate limiter + required fields + honeypot-ready structure |
 | Injection via form fields | Prisma parameterized queries; no string interpolation into SQL; React escapes output |
 | Credential stuffing on /login | bcrypt verify cost; failed sign-ins return a single generic error |
+| Verification-code brute force | 6-digit code stored bcrypt-hashed; 5-attempt budget then fresh-code required; 15-minute expiry |
+| Account enumeration via reset/reset-request | Reset always succeeds for well-formed emails (no oracle); sign-up duplicate error is the original's observable behavior |
 | Stale-property inquiries | Existence check inside the action |
 | Secret leakage | `.env` git-ignored; `.env.example` carries sentinels only; demo password is intentionally public demo data |
 
@@ -528,8 +553,9 @@ no privileged surface exists yet, so no permission matrix is warranted
 | Unit | `src/lib/format.test.ts` | 9 | Price/sqft formatting, JSON-array parsing, canonical constants and price-band contiguity |
 | Unit (SEO) | `src/lib/seo.test.ts` | 11 | Site constants verbatim from the original; `pageMetadata()` full OG/Twitter emission, per-page description pattern, og:image/url/site-name, twitter card |
 | Integration (actions, real DB) | `src/actions/inquiry.test.ts` | 7 | Validation paths, unknown inquiry type, not-found property, rate limiting, happy-path persistence, newsletter sentinel behavior |
+| Integration (auth, real DB) | `src/actions/auth.test.ts` | 12 | Sign-up validation with literal original copy, duplicate detection, unverified user + hashed expiring code + 5-attempt budget, verify/clear challenge, resend budget reset, reset-request oracle-free behavior |
 | Integration (queries, real DB) | `src/lib/queries.test.ts` | 15 | Filter-engine semantics (type/location/price-band boundaries/beds/search, conjunctive combos), neighborhood counts, hero option derivation |
-| E2E (Playwright, real Chromium) | `e2e/*.spec.ts` | 33 | Font-cascade regression guard, original page titles, hero popover dropdowns + navigation params, property not-found inline state, filter URL round-trips + per-filter widths, served meta layer (description/og:*/twitter:*/favicon), `sitemap.xml` + `robots.txt`, stray-API-route absence, inquiry/newsletter persistence to the DB, demo login, mobile menu |
+| E2E (Playwright, real Chromium) | `e2e/*.spec.ts` | 43 | Font-cascade regression guard, original page titles, hero popover dropdowns + navigation params, property not-found inline state, filter URL round-trips + per-filter widths + zero-match empty state + Clear Filters, served meta layer (description/og:*/twitter:*/favicon), `sitemap.xml` + `robots.txt`, stray-API-route absence, inquiry/newsletter persistence to the DB (silent reset, no toast outside /login), the five-view auth card (transitions, literal error copy, OTP auto-advance, attempt countdown, login-only toaster scope), demo login, mobile menu |
 
 ### 7.2 Test Patterns
 
@@ -555,8 +581,9 @@ tracked task (see §10).
 2. `bun run typecheck` — clean.
 3. `bun run test` — all passing.
 4. `bun run test:e2e` — all passing against the production build.
-5. Browser-verify affected flows (hero search → filters → detail → inquiry;
-   login with demo credentials; newsletter; mobile menu).
+5. Browser-verify affected flows (hero search → filters incl. zero-match →
+   detail → inquiry; the login card's five views with demo credentials;
+   newsletter; mobile menu).
 6. `tail dev.log` — no runtime errors from the session.
 7. `bun audit` before deploys.
 
@@ -647,7 +674,9 @@ never commit `.env`, `db/*.db`, logs, or scratch material.
 | Low | Rate limiter is in-process | Resets on restart; not shared across instances | Open (acceptable at demo scale; move to DB-backed window if deployed multi-node) |
 | Info | Original's og:description truncates to "…experien." (builder bug) | Clone ships the complete word — intentional fidelity deviation | By design (v1.2) |
 | Info | Next 16 renders sitemap priority `1.0` as `1` and normalizes `User-agent` casing | Byte-level diff vs original's sitemap/robots; semantically identical to crawlers | By design (v1.2) |
-| Info | Signup ("Need an account?") renders as a link to /login | Matches original's template behavior; no registration flow | Accepted |
+| Info | Signup ("Need an account?") opens the original's create-account → verify-email flow | Registration is real (unverified User + 6-digit code); mail transport is out of scope, so outside production the code is returned as `devCode` | By design (v1.3) |
+| Info | Inquiry form success shows NO toast | The original mounts its sonner Toaster ONLY on /login (verified route-by-route); the form's toast() call is a no-op and the form silently resets — reproduced bug-for-bug | By design (v1.3) |
+| Info | Password reset terminates at the "Check your email" view | No mail transport bundled; no completion route is observable on the original — deployment concern | By design (v1.3) |
 | Info | framer-motion logs a scroll-container position warning in dev | Cosmetic console noise only | Accepted |
 | Info | Google button always visible; without env keys it shows a setup notice instead of failing | Matches the original's always-visible button | By design (ADR-005, v1.1) |
 | Info | Properties filters are URL-driven (original is state-driven after URL hydration) | Shareable/back-forward-correct views; entry points (hero, neighborhood cards) interplay identically | Intentional improvement (ADR-004) |
@@ -662,12 +691,13 @@ never commit `.env`, `db/*.db`, logs, or scratch material.
 | `src/app/page.tsx` | Home page composition (hero → parallax) |
 | `src/app/properties/page.tsx` | Listings page — awaits searchParams, renders filters + grid |
 | `src/app/property/[id]/page.tsx` | Detail page — gallery, stats, features, map, sticky inquiry; inline not-found state |
-| `src/app/login/page.tsx` | Slate auth card (Google + credentials) |
+| `src/app/login/page.tsx` | The original's five-view auth card (sign-in / reset / check-email / sign-up / verify-email) |
 | `src/app/not-found.tsx` | The original's centered slate 404 inside the site chrome |
 | `src/lib/seo.ts` | SEO helper — site constants + `pageMetadata()` (full OG/Twitter emission) |
 | `src/app/sitemap.ts` | `/sitemap.xml` — the original's 7 public URLs with priorities |
 | `src/app/robots.ts` | `/robots.txt` — allow-all + absolute sitemap reference |
 | `src/actions/inquiry.ts` | The mutation seam — validation, rate limit, persistence |
+| `src/actions/auth.ts` | Auth-flow actions — sign-up / verify / resend / reset-request (verification challenge) |
 | `src/lib/queries.ts` | DTO types + all read functions + filter engine |
 | `src/lib/constants.ts` | Canonical filter lists, hero sentinels, neighborhoods, site facts |
 | `src/lib/db.ts` | Prisma client singleton |

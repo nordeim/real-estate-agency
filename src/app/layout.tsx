@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Instrument_Serif, Inter } from "next/font/google";
 import "./globals.css";
-import { Toaster } from "@/components/ui/sonner";
 import {
   OG_IMAGE_PATH,
   SITE_DESCRIPTION,
@@ -75,7 +74,6 @@ export default function RootLayout({
     >
       <body className="antialiased bg-background text-foreground font-body">
         {children}
-        <Toaster />
       </body>
     </html>
   );

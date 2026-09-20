@@ -5,7 +5,7 @@
 ![TypeScript](https://img.shields.io/badge/TypeScript-5-3178c6)
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind-4-38bdf8)
 ![Prisma](https://img.shields.io/badge/Prisma-6-2d3748)
-![Tests](https://img.shields.io/badge/tests-42%20vitest%20%C2%B7%2033%20e2e-brightgreen)
+![Tests](https://img.shields.io/badge/tests-54%20vitest%20%C2%B7%2043%20e2e-brightgreen)
 
 > A production-grade, enterprise-polished clone of the MAISON ESTATE luxury
 > real-estate application — rebuilt on Next.js 16 with the original's exact
@@ -26,11 +26,11 @@ layer, validated Server Actions, tested domain logic, seeded demo content).
 | --- | --- |
 | 🎬 Video hero with sentence-style search | "I am looking for a **[Type]** in **[Location]** at the price of **[Price]**" — glassmorphic pill with serif-italic underlined dropdowns over the original's cinematic loop |
 | 🏛️ Curated listings | 12 seeded luxury residences with galleries, stats (beds/baths/sqft/garage/year), features, virtual tours and Google Maps embeds |
-| 🔎 URL-driven filters | Search, location, type, price band and beds — shareable, back/forward-safe |
+| 🔎 URL-driven filters | Search, location, type, price band and beds — shareable, back/forward-safe; "Clear Filters" and the serif zero-match empty statement mirror the original |
 | 🏷️ Rotating listing stamps | The signature animated "NEW" / "OPEN HOUSE" circular badges |
 | 👔 Advisors & testimonials | Featured advisors with credentials; auto-rotating success stories |
 | 📇 Lead capture | Inquiry form (tour / virtual tour / price / general) + newsletter, persisted via validated Server Actions with rate limiting |
-| 🔐 Credentials auth | Slate auth-card sign-in seeded with the original demo user; Google button surfaced with graceful unconfigured notice |
+| 🔐 Credentials auth | The original's five-view auth card — sign-in, reset-password → check-email, create-account → verify-email (6-digit code with attempt budget); Google button surfaced with graceful unconfigured notice |
 | 🔎 SEO & social layer | The original's full meta suite — canonical description, per-page OpenGraph + Twitter cards, SVG favicon, `sitemap.xml` (7 URLs) and minimal `robots.txt` |
 | 📱 Responsive & accessible | Mobile overlay menu, keyboard-navigable controls, labeled forms, reduced-motion support |
 
@@ -91,9 +91,11 @@ flowchart TB
 ├── 📂 src/
 │   ├── 📂 actions/
 │   │   ├── 📄 inquiry.ts        # Server Actions — the only mutation seam
-│   │   └── 📄 inquiry.test.ts   # Action integration tests (real DB)
+│   │   ├── 📄 inquiry.test.ts   # Action integration tests (real DB)
+│   │   ├── 📄 auth.ts           # Sign-up / verify / resend / reset actions
+│   │   └── 📄 auth.test.ts      # Auth challenge integration tests (real DB)
 │   ├── 📂 app/
-│   │   ├── 📄 layout.tsx        # Fonts on <html> (Instrument Serif + Inter), metadata, toaster
+│   │   ├── 📄 layout.tsx        # Fonts on <html> (Instrument Serif + Inter), root metadata
 │   │   ├── 📄 globals.css       # Design tokens — the MAISON design system
 │   │   ├── 📄 page.tsx          # Home (hero, featured, neighborhoods, services…)
 │   │   ├── 📄 sitemap.ts        # /sitemap.xml — the original's 7 public URLs
@@ -102,7 +104,7 @@ flowchart TB
 │   │   ├── 📂 property/[id]/    # Detail: gallery, stats, features, map, inquiry
 │   │   ├── 📂 sell/             # Seller page + contact form
 │   │   ├── 📂 about/            # Legacy, advisors, credentials, community
-│   │   ├── 📂 login/            # Slate auth card (Google + credentials)
+│   │   ├── 📂 login/             # Five-view auth card (sign-in / reset / check-email / sign-up / verify)
 │   │   └── 📂 privacy|terms|accessibility/
 │   ├── 📂 components/
 │   │   ├── 📂 site/             # Header, footer, hero, dropdowns, cards, forms, stamps…
@@ -133,9 +135,14 @@ bun run dev
 
 1. Open <http://localhost:3000> — the video hero renders and "Featured
    Properties" shows six listings.
-2. `bun run test` prints `4 passed (4) / 42 passed (42)`.
+2. `bun run test` prints `5 passed (5) / 54 passed (54)`.
 3. Sign in at <http://localhost:3000/login> with
    `sepnetflix2023@outlook.com` / `$Abcd1234` — you are redirected home.
+4. On the same card, "Forgot password?" walks the reset → check-email
+   views and "Need an account? Sign up" walks create-account →
+   verify-email (outside production the verification code is returned
+   as `devCode` so the flow is completable locally without a mail
+   provider).
 
 Demo credentials are seeded on purpose to mirror the original application.
 
@@ -154,8 +161,8 @@ Demo credentials are seeded on purpose to mirror the original application.
 ## Testing
 
 ```bash
-bun run test        # unit + integration (42 tests, real SQLite DB)
-bun run test:e2e   # Playwright e2e (33 tests) — builds & boots the production
+bun run test        # unit + integration (54 tests, real SQLite DB)
+bun run test:e2e   # Playwright e2e (43 tests) — builds & boots the production
                    # standalone server on :3003; E2E_BASE_URL reuses a running one
 bun run lint        # ESLint — must be clean
 bun run typecheck   # tsc --noEmit — must be clean
@@ -163,11 +170,14 @@ bun run typecheck   # tsc --noEmit — must be clean
 
 Integration tests run the real Server Actions and query engine against the
 local SQLite database (validation failures, rate limiting, not-found guards,
-persistence, filter semantics, the SEO metadata helper). The e2e suite guards
-the font cascade, the original app's page titles, the hero popover dropdowns,
-the served meta layer (description, og:*, twitter:*, favicon), `sitemap.xml`
-and `robots.txt`, and the full user flows — including inquiry/newsletter rows
-landing in the database and the demo login.
+persistence, filter semantics, the SEO metadata helper, and the full
+sign-up → verify challenge). The e2e suite guards the font cascade, the
+original app's page titles, the hero popover dropdowns, the served meta layer
+(description, og:*, twitter:*, favicon), `sitemap.xml` and `robots.txt`, the
+zero-match empty state with Clear Filters, the five-view auth card
+(transitions, literal error copy, OTP auto-advance, attempt countdown, the
+login-only toaster scope), and the full user flows — including
+inquiry/newsletter rows landing in the database and the demo login.
 
 ## Screenshots
 
@@ -179,9 +189,13 @@ landing in the database and the demo login.
 | Property detail | `docs/screenshots/04-property-detail.png` |
 | Sell | `docs/screenshots/05-sell-page.png` |
 | About | `docs/screenshots/06-about-page.png` |
-| Login | `docs/screenshots/07-login-page.png` |
+| Login — sign-in | `docs/screenshots/07-login-page.png` |
 | Mobile home | `docs/screenshots/08-mobile-homepage.png` |
 | 404 | `docs/screenshots/09-not-found-page.png` |
+| Login — reset password | `docs/screenshots/10-login-reset.png` |
+| Login — create account | `docs/screenshots/11-login-signup.png` |
+| Login — verify email | `docs/screenshots/12-login-verify.png` |
+| Listings — zero-match empty state | `docs/screenshots/13-properties-empty.png` |
 
 ## Deployment
 
@@ -202,7 +216,8 @@ Any Node host works. For production:
 | Core build | ✅ Complete | All pages, actions, auth, seed data |
 | Parity iteration | ✅ Complete | Font-cascade fix, hero popover dropdowns, section structures (neighborhoods/services/sell/about/footer/404/login), original page titles |
 | SEO/metadata parity | ✅ Complete | Full OG/Twitter meta layer, SVG favicon wiring, sitemap.xml, robots.txt, per-page metadata helper |
-| Quality gates | ✅ Complete | lint/typecheck clean, 42 unit + 33 e2e tests, production build verified |
+| Interactive-state parity | ✅ Complete | Five-view auth card w/ verification, zero-match empty state, Clear Filters, login-only toaster scope, newsletter success copy |
+| Quality gates | ✅ Complete | lint/typecheck clean, 54 unit + 43 e2e tests, production build verified |
 | Docs & delivery | ✅ Complete | README, AGENTS.md, CLAUDE.md, PAD, screenshots, .env.example |
 
 ## License

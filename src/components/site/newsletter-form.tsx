@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { ArrowRight, Check } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { subscribeNewsletter } from "@/actions/inquiry";
 
 /** Footer newsletter island — persists subscriptions as Inquiry records. */
@@ -30,11 +30,10 @@ export function NewsletterForm() {
     <div>
       {subscribed ? (
         <p
-          className="flex items-center gap-2 font-body text-sm text-background/80"
+          className="font-body text-sm tracking-label uppercase text-background/80"
           role="status"
         >
-          <Check size={16} className="text-[#facca3]" aria-hidden />
-          Thank you for subscribing.
+          Thank you for subscribing
         </p>
       ) : (
         <form

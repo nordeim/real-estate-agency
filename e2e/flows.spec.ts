@@ -96,9 +96,18 @@ test("property inquiry form persists to the database", async ({ page }) => {
   await page.getByLabel("Message").fill("Sent from the Playwright e2e suite.");
 
   await page.getByRole("button", { name: /send inquiry/i }).click();
-  await expect(page.getByText("Inquiry Sent", { exact: true })).toBeVisible({
-    timeout: 10_000,
-  });
+
+  // The original never shows a toast here — its sonner Toaster is
+  // mounted ONLY on /login, so the inquiry form's toast() call is a
+  // silent no-op and the form simply resets.
+  await expect(
+    page.getByLabel("Full name")
+  ).toHaveValue("", { timeout: 10_000 });
+  await expect(page.getByLabel("Email", { exact: true })).toHaveValue("");
+  await expect(page.getByText(/inquiry sent/i)).toHaveCount(0);
+  await expect(
+    page.locator("section[aria-label^='Notifications'], [data-sonner-toaster]")
+  ).toHaveCount(0);
 
   const inquiry = await db.inquiry.findFirst({
     where: { email },
@@ -119,9 +128,13 @@ test("footer newsletter persists as a sentinel inquiry", async ({ page }) => {
     .last()
     .fill(email);
   await page.getByRole("button", { name: "Subscribe" }).last().click();
-  await expect(page.getByText(/thank you for subscribing/i)).toBeVisible({
-    timeout: 10_000,
-  });
+  // The original's success line: plain uppercase tracking-label text,
+  // no icon, no trailing period.
+  const success = page.getByText(/thank you for subscribing/i);
+  await expect(success).toBeVisible({ timeout: 10_000 });
+  await expect(success).toHaveText("Thank you for subscribing");
+  await expect(success).toHaveClass(/tracking-label/);
+  await expect(success).toHaveClass(/uppercase/);
 
   const subscription = await db.inquiry.findFirst({
     where: { email },

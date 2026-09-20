@@ -513,8 +513,9 @@ async function main() {
       name: "Maison Member",
       passwordHash,
       role: "user",
+      verified: true,
     },
-    update: { passwordHash },
+    update: { passwordHash, verified: true },
   });
   console.log("  demo user: sepnetflix2023@outlook.com / $Abcd1234");
 

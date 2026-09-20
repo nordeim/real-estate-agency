@@ -54,7 +54,7 @@ export default async function PropertiesPage({ searchParams }: PageProps) {
           </div>
 
           <div className="pb-24 md:pb-40 px-[2%]">
-            {properties.length > 0 && (
+            {properties.length > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 md:gap-12">
                 {properties.map((property) => (
                   <PropertyCard
@@ -64,6 +64,15 @@ export default async function PropertiesPage({ searchParams }: PageProps) {
                     badgeType="new"
                   />
                 ))}
+              </div>
+            ) : (
+              <div className="text-center py-24">
+                <p className="font-display text-display-sm font-light text-muted-foreground">
+                  No properties match your criteria
+                </p>
+                <p className="font-body text-sm text-muted-foreground mt-3">
+                  Try adjusting your filters
+                </p>
               </div>
             )}
           </div>

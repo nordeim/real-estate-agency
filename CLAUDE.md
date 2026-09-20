@@ -15,7 +15,9 @@ Key technical decisions: App Router with RSC data reads and Server Actions as
 the only mutation seam; Tailwind v4 CSS-first theming with the original app's
 exact design tokens; SQLite for zero-config local development with a
 documented PostgreSQL production path; NextAuth v4 credentials auth seeded
-with the original app's demo user.
+with the original app's demo user; the original's five-view auth card
+(reset / check-email / sign-up / verify-email) backed by validated server
+actions with a bcrypt-hashed, attempt-limited email-verification challenge.
 
 ## Foundational Principles
 
@@ -54,7 +56,8 @@ with the original app's demo user.
 ### Language & Framework Guidelines
 
 - **Next.js 16 App Router**: Server Components by default; `"use client"` only
-  for interactive leaves (forms, carousels, header). `params`/`searchParams`
+  for interactive leaves (forms, carousels, header, the login card's views).
+  `params`/`searchParams`
   are async — `await` them. Use `next/font/google`, `next/link`, Metadata API
   via `pageMetadata()` from `src/lib/seo.ts` (emits the full OG/twitter
   objects — Next replaces them wholesale, partial overrides drop fields).
@@ -65,6 +68,11 @@ with the original app's demo user.
   file.
 - **Prisma**: schema in `prisma/schema.prisma`; client via `@/lib/db`;
   JSON-array columns parsed through `parseJsonArray`.
+- **Auth flows**: the login card's views drive `src/actions/auth.ts`
+  (sign-up → verify-email → sign-in; reset → check-email). Error copy is
+  literal — it mirrors strings observed on the original. The sonner Toaster
+  renders only on `/login` (original scope); toasts elsewhere are
+  intentional no-ops.
 - **framer-motion**: only inside client components; use `<Reveal>` from
   `src/components/site/reveal.tsx` in server pages.
 
@@ -97,16 +105,20 @@ bun run dev                     # http://localhost:3000
 
 - **Unit**: pure helpers (`src/lib/format.test.ts`) — formatting, JSON-array
   parsing, canonical constants and price-band contiguity.
-- **Integration**: Server Actions (`src/actions/inquiry.test.ts`) and the
-  query/filter engine (`src/lib/queries.test.ts`) run against the real SQLite
-  DB — validation paths, rate limiting, not-found guards, happy-path
-  persistence, filter semantics.
+- **Integration**: Server Actions (`src/actions/inquiry.test.ts`,
+  `src/actions/auth.test.ts`) and the query/filter engine
+  (`src/lib/queries.test.ts`) run against the real SQLite DB — validation
+  paths, rate limiting, not-found guards, happy-path persistence, filter
+  semantics, and the full sign-up → verify challenge (attempts, expiry,
+  clearing).
 - **E2E (Playwright, `e2e/`)**: `bun run test:e2e` builds the production
   standalone server (isolated distDir via `PROD_DIST_DIR`) and drives a real
   Chromium — font rendering regression guards, page titles, hero dropdown
-  behavior, filter navigation, inquiry/newsletter persistence to the DB,
-  login with the demo credentials, mobile menu. The db is symlinked into the
-  standalone tree so server and assertions share one SQLite file.
+  behavior, filter navigation, the zero-match empty state + Clear Filters,
+  inquiry/newsletter persistence to the DB, the five-view auth card
+  (transitions, literal error copy, OTP auto-advance, attempt countdown,
+  toaster scope), and login with the demo credentials. The db is symlinked
+  into the standalone tree so server and assertions share one SQLite file.
 - **SEO routes**: `e2e/metadata.spec.ts` guards the served meta layer
   (description, og:*, twitter:*, favicon link) and `e2e/seo-routes.spec.ts`
   guards `/sitemap.xml`, `/robots.txt`, and the absence of stray API routes.
@@ -151,8 +163,10 @@ Single `main` branch; push with `git push origin main`.
   Failures carry a code (`VALIDATION`, `RATE_LIMITED`, `NOT_FOUND`,
   `INTERNAL`) and a user-safe message.
 - Check `dev.log` after browser sessions for runtime errors.
-- Forms render field-level errors from action `fieldErrors`; the inquiry
-  success path surfaces a toast via `sonner`.
+- Forms render field-level errors from action `fieldErrors`; the auth card
+  renders action messages as its red/green alert blocks; the inquiry form
+  resets silently on success (the original mounts no Toaster outside
+  `/login`).
 
 ## Communication & Documentation
 
@@ -180,6 +194,9 @@ No REST for UI mutations. NextAuth route handler under
 Models: `Property`, `Agent`, `Testimonial`, `Inquiry`, `User`. Reads via
 `src/lib/queries.ts` (typed DTOs); writes via Server Actions. Enums are
 string columns validated by constants/Zod (SQLite-friendly, PG-portable).
+The `User` model carries the email-verification challenge columns
+(`verified`, `verificationCodeHash`, `verificationCodeExpiresAt`,
+`verificationAttemptsLeft`) — cleared on successful verification.
 
 ### Environment Variables
 

@@ -96,12 +96,19 @@ model Inquiry {
 
 // Application user for the /login credentials flow.
 // The sandbox demo seeds sepnetflix2023@outlook.com (see prisma/seed.ts).
+// Email verification backs the original app's sign-up → 6-digit code flow:
+// a pending signup stores a bcrypt-hashed code with an expiry and a
+// 5-attempt budget; sign-in requires verified = true.
 model User {
-  id           String   @id @default(uuid())
-  email        String   @unique
-  name         String?
-  passwordHash String
-  role         String   @default("user")
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id                        String    @id @default(uuid())
+  email                     String    @unique
+  name                      String?
+  passwordHash              String
+  role                      String    @default("user")
+  verified                  Boolean   @default(false)
+  verificationCodeHash      String?
+  verificationCodeExpiresAt DateTime?
+  verificationAttemptsLeft  Int?
+  createdAt                 DateTime  @default(now())
+  updatedAt                 DateTime  @updatedAt
 }

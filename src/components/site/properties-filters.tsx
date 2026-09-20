@@ -10,7 +10,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { Search } from "lucide-react";
+import { Search, X } from "lucide-react";
 import {
   PROPERTY_TYPES,
   LOCATIONS,
@@ -58,6 +58,23 @@ export function PropertiesFilters({ total }: { total: number }) {
     if (searchDraft.trim() !== filters.search) {
       pushFilters({ search: searchDraft });
     }
+  };
+
+  // "Clear Filters" appears only when a filter deviates from its
+  // sentinel default (as on the original). Resetting pushes the bare
+  // /properties URL — the clone's shareable-state improvement over the
+  // original's client-only reset.
+  const filtersActive = Boolean(
+    filters.search.trim() ||
+      filters.type !== "All Types" ||
+      filters.location !== "All Locations" ||
+      filters.price !== "Any Price" ||
+      filters.beds !== "Any Beds"
+  );
+
+  const clearFilters = () => {
+    setSearchDraft("");
+    router.push("/properties", { scroll: false });
   };
 
   // Per-filter widths as measured on the original app's filter bar.
@@ -164,9 +181,21 @@ export function PropertiesFilters({ total }: { total: number }) {
         </Select>
       </div>
 
-      <p className="font-body text-sm text-muted-foreground">
-        {total} {total === 1 ? "property" : "properties"} found
-      </p>
+      <div className="flex items-center justify-between">
+        <p className="font-body text-sm text-muted-foreground">
+          {total} {total === 1 ? "property" : "properties"} found
+        </p>
+        {filtersActive && (
+          <button
+            type="button"
+            onClick={clearFilters}
+            className="flex items-center gap-1 font-body text-xs tracking-label uppercase text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <X size={12} aria-hidden />
+            Clear Filters
+          </button>
+        )}
+      </div>
     </div>
   );
 }

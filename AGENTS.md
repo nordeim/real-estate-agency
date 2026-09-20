@@ -65,6 +65,23 @@ test:e2e**, then browser-verify the affected flow (see Verification below).
   they would conflict). Note: Next 16's `MetadataRoute.Sitemap` key is
   `changeFrequency` (a `changefreq` key is silently dropped), and the
   serializer renders priority `1.0` as `1`.
+- **The login card is a five-view state machine** (sign-in · reset ·
+  check-email · create-account · verify-email) that mirrors the
+  original app. The backing actions live in `src/actions/auth.ts`:
+  sign-up creates an UNVERIFIED `User` (bcrypt-hashed 6-digit code,
+  15-minute expiry, 5-attempt budget); `verifyEmailWithCode` verifies
+  and clears the challenge; sign-in (`src/lib/auth.ts` authorize)
+  rejects unverified users. Outside production the sign-up/resend
+  actions return `devCode` so local flows (and the test suites) can
+  complete verification without a mail provider — production NEVER
+  returns it. Mail transport is deliberately out of scope: the
+  original's reset flow terminates at the "Check your email" view
+  and no completion route is observable.
+- **The sonner Toaster is mounted ONLY on `/login`** (matching the
+  original — verified route-by-route). `inquiry-form-with-toast.tsx`
+  still calls `toast()` on success; without a mounted Toaster that is
+  a silent no-op and the form just resets, exactly like the original.
+  Do not move the Toaster back into `layout.tsx`.
 - **framer-motion needs a client boundary.** In Server Components use the
   `<Reveal>` wrapper (`src/components/site/reveal.tsx`); only `"use client"`
   components may import `motion` directly.
@@ -77,6 +94,10 @@ test:e2e**, then browser-verify the affected flow (see Verification below).
   are canonical in `src/lib/constants.ts` — never hard-code them in
   components. The properties filter bar is URL-driven: filters derive from
   `searchParams`, commits push new URLs (shareable, back/forward-safe).
+  "Clear Filters" renders only when a filter deviates from its sentinel
+  default and resets to bare `/properties`; a zero-match search renders
+  the serif empty statement ("No properties match your criteria") —
+  both mirror the original.
 - The homepage hero search uses its own "Any X" sentinels (`HERO_DEFAULTS`,
   `HERO_*_OPTIONS`) and the custom popover dropdown
   (`src/components/site/hero-dropdown.tsx`) — the properties page uses the
@@ -86,7 +107,7 @@ test:e2e**, then browser-verify the affected flow (see Verification below).
   `fullName: "Newsletter Subscriber"`, `inquiryType: "General"` — this mirrors
   the original app and is intentional.
 - The demo login user (`sepnetflix2023@outlook.com` / `$Abcd1234`) is seeded
-  in `prisma/seed.ts` with a bcrypt hash; it exists so the /login flow can be
+  VERIFIED in `prisma/seed.ts` with a bcrypt hash; it exists so the /login flow can be
   exercised locally. Do not remove it, and never commit a real password.
 
 ## Verification
@@ -94,8 +115,11 @@ test:e2e**, then browser-verify the affected flow (see Verification below).
 - After any change, run the gate
   (`bun run lint && bun run typecheck && bun run test && bun run test:e2e`).
 - For UI changes, verify in a browser: home hero search → `/properties`
-  filters → property detail → inquiry form (row lands in `Inquiry` table);
-  `/login` with the demo credentials; footer newsletter.
+  filters (incl. a zero-match search → empty state + Clear Filters) →
+  property detail → inquiry form (row lands in `Inquiry` table, form
+  resets silently — no toast outside /login); `/login` with the demo
+  credentials; the forgot-password and sign-up → verify-email views;
+  footer newsletter.
 - `bun run build` is available for production builds but the local dev
   workflow is `bun run dev`; check `dev.log` for runtime errors after
   browser sessions.

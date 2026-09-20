@@ -22,6 +22,9 @@ export const authOptions: NextAuthOptions = {
           where: { email: credentials.email.toLowerCase().trim() },
         });
         if (!user) return null;
+        // Pending sign-ups (unverified) cannot sign in — they must finish
+        // the 6-digit code flow first.
+        if (!user.verified) return null;
         const valid = await bcrypt.compare(
           credentials.password,
           user.passwordHash
