@@ -1,0 +1,107 @@
+// MAISON ESTATE — Real Estate Agency
+// Prisma schema for the property listings domain.
+// SQLite is used for local development/demo; switch `provider`
+// to "postgresql" and point DATABASE_URL at a Postgres instance
+// for production deployments (see .env.example).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// Enums are modeled as String + app-level validation (Zod) because the
+// dev datasource is SQLite; see src/lib/constants.ts for the canonical
+// value lists (property types, inquiry types, filter options).
+
+model Property {
+  id               String   @id @default(uuid())
+  title            String   @unique
+  shortDescription String?
+  description      String?
+  price            Int // USD, whole dollars
+  bedrooms         Int      @default(0)
+  bathrooms        Int      @default(0)
+  sqft             Int?
+  garage           Int      @default(0)
+  yearBuilt        Int?
+  address          String?
+  city             String   @default("San Francisco")
+  state            String   @default("CA")
+  zipCode          String?
+  neighborhood     String?
+  location         String? // primary area label used by filters
+  propertyType     String   @default("Estate")
+  images           String   @default("[]") // JSON array of URLs
+  featuredImage    String?
+  features         String   @default("[]") // JSON array of strings
+  videoUrl         String?
+  isFeatured       Boolean  @default(false)
+  isHighPriority   Boolean  @default(false)
+  status           String   @default("Active")
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([isFeatured, createdAt])
+  @@index([location])
+  @@index([propertyType])
+  @@index([price])
+}
+
+model Agent {
+  id                String   @id @default(uuid())
+  name              String
+  title             String
+  bio               String?
+  photo             String?
+  yearsExperience   Int?
+  totalSalesVolume  String?
+  email             String?  @unique
+  phone             String?
+  isFeatured        Boolean  @default(false)
+  createdAt         DateTime @default(now())
+
+  @@index([isFeatured, createdAt])
+}
+
+model Testimonial {
+  id           String   @id @default(uuid())
+  quote        String
+  clientName   String
+  propertyType String?
+  location     String?
+  createdAt    DateTime @default(now())
+}
+
+model Inquiry {
+  id            String   @id @default(uuid())
+  fullName      String
+  email         String
+  phone         String?
+  message       String?
+  inquiryType   String   @default("Tour Request")
+  preferredDate String? // ISO date, optional
+  propertyId    String?
+  propertyTitle String?
+  status        String   @default("New")
+  createdAt     DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([email])
+  @@index([propertyId])
+}
+
+// Application user for the /login credentials flow.
+// The sandbox demo seeds sepnetflix2023@outlook.com (see prisma/seed.ts).
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  name         String?
+  passwordHash String
+  role         String   @default("user")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}

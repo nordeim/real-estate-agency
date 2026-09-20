@@ -49,3 +49,8 @@ worklog.md
 examples/
 mini-services/
 /skills/
+
+# sandbox infrastructure
+Caddyfile
+tests/
+public/logo.svg
