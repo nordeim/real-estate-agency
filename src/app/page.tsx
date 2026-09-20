@@ -58,9 +58,9 @@ export default async function HomePage() {
   };
 
   return (
-    <div>
+    <div className="min-h-screen flex flex-col">
       <SiteHeader />
-      <main>
+      <main className="flex-1">
         <HeroSearch />
 
         {/* Featured Properties */}

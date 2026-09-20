@@ -1,4 +1,4 @@
-# MAISON ESTATE — Master Project Architecture Document (PAD) v1.3
+# MAISON ESTATE — Master Project Architecture Document (PAD) v1.4
 
 **Classification:** Internal Engineering Reference
 **Status:** DEFINITIVE, PRODUCTION-LOCKED BLUEPRINT
@@ -11,6 +11,7 @@
 
 | Version | Date | Change | Tag |
 | --- | --- | --- | --- |
+| 1.4 | 2026-09-20 | Layout & copy parity: flex-column page chrome (`min-h-screen flex flex-col` + `main.flex-1`) on every content page with per-page top padding (universal `pt-24` removed; measured H1 viewport-tops now match the original on all pages); legal pages rewritten to the original's verbatim Wix-template copy (`legal-page.tsx`); about-page structure (2 hairlines + parallax band `h-[500px] md:h-[650px]`); sell `#contact` anchor div (scroll-margin-top 80px); `.hairline` visibility fix (`var(--border)` — was transparent); layout/legal e2e suites (15 tests) | [CA] |
 | 1.3 | 2026-09-20 | Interactive-state parity: five-view auth card (reset/check-email/create-account/verify-email) with `src/actions/auth.ts` + User verification columns; zero-match empty state + Clear Filters on /properties; login error alert + newsletter success copy alignment; sonner Toaster scoped to /login only (inquiry toast becomes an intentional no-op, mirroring the original); auth test suites (12 vitest + 9 e2e) | [CA] |
 | 1.2 | 2026-09-20 | SEO/metadata parity: `src/lib/seo.ts` + `pageMetadata()` on all pages, OG/Twitter layer, SVG favicon wiring, `sitemap.ts`/`robots.ts`, filter-width parity; scaffold purge (`/api` route, `tailwind.config.ts`, 44 unused ui components, hooks); SEO test suites (11 vitest + 8 e2e) | [CA] |
 | 1.1 | 2026-09-20 | Parity iteration: font-cascade fix (F1), hero popover dropdowns, section reworks, original page titles, Playwright e2e suite, queries tests | [CA] |
@@ -465,10 +466,20 @@ contrast; accent is reserved for large/bold or non-essential decoration.
 
 Brand classes (in `globals.css`): `.ghost-btn` (pill, 1px foreground border,
 transparent, uppercase, 0.1em tracking), `.ghost-btn-light` (white variant
-for hero), `.hairline` (0.5px rule), `.tracking-editorial` (−0.02em),
+for hero), `.hairline` (0.5px rule painting the visible beige `--border`
+color, as on the original), `.tracking-editorial` (−0.02em),
 `.tracking-label` (0.15em). Layout rhythm: `max-w-[1400px]`/`[1600px]`
 containers with `px-[2%]`/`[4%]`, section padding `py-24 md:py-40`, header
-`h-14 md:h-16` fixed. shadcn primitives (Select, Input, Textarea) are
+`h-14 md:h-16` fixed. Page chrome: every content page wraps in
+`div.min-h-screen.flex.flex-col` (fixed header · `main.flex-1` · footer) so
+the footer pins to the viewport bottom on short pages; there is no global
+`pt-24` — properties/legal own their `pt-32`/`pt-40` containers and the hero
+is `h-screen` with `md:pt-[35vh]`. Note: `.ghost-btn`'s `hsl(var(--x))`
+declarations are invalid at computed-value time, but their fallbacks
+(transparent bg / currentColor border) reproduce the original's rendering
+exactly — do not rewrite them; `.hairline` had the same pattern but its
+transparent fallback diverged, so it references `var(--border)` directly.
+shadcn primitives (Select, Input, Textarea) are
 restyled via the tokens — e.g. filter selects render as pills.
 
 ### 5.4 Motion
@@ -555,7 +566,7 @@ no privileged surface exists yet, so no permission matrix is warranted
 | Integration (actions, real DB) | `src/actions/inquiry.test.ts` | 7 | Validation paths, unknown inquiry type, not-found property, rate limiting, happy-path persistence, newsletter sentinel behavior |
 | Integration (auth, real DB) | `src/actions/auth.test.ts` | 12 | Sign-up validation with literal original copy, duplicate detection, unverified user + hashed expiring code + 5-attempt budget, verify/clear challenge, resend budget reset, reset-request oracle-free behavior |
 | Integration (queries, real DB) | `src/lib/queries.test.ts` | 15 | Filter-engine semantics (type/location/price-band boundaries/beds/search, conjunctive combos), neighborhood counts, hero option derivation |
-| E2E (Playwright, real Chromium) | `e2e/*.spec.ts` | 43 | Font-cascade regression guard, original page titles, hero popover dropdowns + navigation params, property not-found inline state, filter URL round-trips + per-filter widths + zero-match empty state + Clear Filters, served meta layer (description/og:*/twitter:*/favicon), `sitemap.xml` + `robots.txt`, stray-API-route absence, inquiry/newsletter persistence to the DB (silent reset, no toast outside /login), the five-view auth card (transitions, literal error copy, OTP auto-advance, attempt countdown, login-only toaster scope), demo login, mobile menu |
+| E2E (Playwright, real Chromium) | `e2e/*.spec.ts` | 58 | Font-cascade regression guard, original page titles, hero popover dropdowns + navigation params, property not-found inline state, filter URL round-trips + per-filter widths + zero-match empty state + Clear Filters, served meta layer (description/og:*/twitter:*/favicon), `sitemap.xml` + `robots.txt`, stray-API-route absence, inquiry/newsletter persistence to the DB (silent reset, no toast outside /login), the five-view auth card (transitions, literal error copy, OTP auto-advance, attempt countdown, login-only toaster scope), demo login, mobile menu, page-chrome/geometry guards (flex-column wrapper on 7 content pages, measured H1 viewport-tops, about structure incl. hairlines + parallax band, sell `#contact` anchor, visible hairline color), and the legal pages' verbatim template copy (label, headings, lists, container geometry, exact typos) |
 
 ### 7.2 Test Patterns
 
@@ -680,6 +691,9 @@ never commit `.env`, `db/*.db`, logs, or scratch material.
 | Info | framer-motion logs a scroll-container position warning in dev | Cosmetic console noise only | Accepted |
 | Info | Google button always visible; without env keys it shows a setup notice instead of failing | Matches the original's always-visible button | By design (ADR-005, v1.1) |
 | Info | Properties filters are URL-driven (original is state-driven after URL hydration) | Shareable/back-forward-correct views; entry points (hero, neighborhood cards) interplay identically | Intentional improvement (ADR-004) |
+| Info | Legal pages ship the original's Wix-template placeholder copy verbatim | Includes boilerplate ("A legal disclaimer"), bracketed placeholders and the template's exact typos — fidelity over polish, pinned byte-level by `e2e/legal.spec.ts` | By design (v1.4) |
+| Info | `.ghost-btn`'s `hsl(var(--x))` CSS is invalid at computed-value time | Its fallbacks (transparent bg, currentColor border) are exactly what the original renders — the "bug" is load-bearing; only `.hairline` was fixed to `var(--border)` | By design (v1.4) |
+| Info | Clone DB is seeded (12 properties, 5 advisors); the original's live DB is empty | Data-driven surfaces (listing grids, advisor cards, counts) differ only by content — structure is byte-identical | By design (demo seed) |
 
 ---
 
@@ -703,6 +717,9 @@ never commit `.env`, `db/*.db`, logs, or scratch material.
 | `src/lib/db.ts` | Prisma client singleton |
 | `src/lib/auth.ts` | NextAuth options |
 | `src/components/site/site-header.tsx` | Scroll-hiding header (transparent at top on all routes), mobile menu |
+| `src/components/site/legal-page.tsx` | Shared legal layout — the original's verbatim Wix-template copy structure (label, hairline-opened sections, dash lists, bracket suffixes) |
+| `src/components/site/reveal.tsx` | Client-boundary scroll reveal (`yOffset` tunes the slide distance) |
+| `src/components/site/parallax-image.tsx` | Full-bleed parallax band (home `section` 280/600px; about `div` 500/650px via `heightClassName`/`wrapperAs`) |
 | `src/components/site/hero-search.tsx` | Video hero + sentence-style search |
 | `src/components/site/hero-dropdown.tsx` | The hero's serif-italic popover dropdown |
 | `src/components/site/property-card.tsx` | Listing card with hover reveal + stamps |

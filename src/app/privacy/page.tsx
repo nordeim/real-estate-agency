@@ -7,46 +7,33 @@ export const metadata: Metadata = pageMetadata({
   path: "/privacy",
 });
 
+/**
+ * The original app ships the Wix "Privacy Policy" template placeholder
+ * copy verbatim — reproduced here bug-for-bug (fidelity over polish).
+ */
 export default function PrivacyPage() {
   return (
     <LegalPage
       title="Privacy Policy"
-      subtitle="Your privacy, protected with the same discretion as your property."
-      lastUpdated="September 2026"
+      titleMargin="mb-16"
       sections={[
         {
-          heading: "Overview",
-          body: [
-            "Maison Estate (\u201cwe\u201d, \u201cus\u201d) respects your privacy and is committed to protecting your personal information. This policy explains what information we collect when you use maisonestate.com, how we use it, and the choices you have.",
-            "By using this website, submitting an inquiry, or subscribing to our market insights, you agree to the practices described below.",
+          heading: "A legal disclaimer",
+          paragraphs: [
+            "The explanations and information provided on this page are only general and high-level explanations and information on how to write your own document of a Privacy Policy. You should not rely on this article as legal advice or as recommendations regarding what you should actually do, because we cannot know in advance what are the specific privacy policies you wish to establish between your business and your customers and visitors. We recommend that you seek legal advice to help you understand and to assist you in the creation of your own Privacy Policy.",
           ],
         },
         {
-          heading: "Information We Collect",
-          body: [
-            "Inquiry details: when you submit an inquiry or schedule a viewing we store your name, email address, phone number (optional), preferred date, message, and the property the inquiry relates to.",
-            "Newsletter subscriptions: we store your email address to send curated market intelligence. Every email includes a way to unsubscribe.",
-            "Usage information: we collect basic, non-identifying analytics about pages visited and interactions to improve the experience.",
+          heading: "Privacy Policy - the basics",
+          paragraphs: [
+            "Having said that, a privacy policy is a statement that discloses some or all of the ways a website collects, uses, discloses, processes, and manages the data of its visitors and customers. It usually also includes a statement regarding the website's commitment to protecting its visitors' or customers' privacy, and an explanation about the different mechanisms the website is implementing in order to protect privacy.",
+            "Different jurisdictions have different legal obligations of what must be included in a Privacy Policy. You are responsible to make sure you are following the relevant legislation to your activities and location.",
           ],
         },
         {
-          heading: "How We Use Information",
-          body: [
-            "We use your information solely to respond to inquiries, schedule property viewings, deliver requested communications, and operate the website. We do not sell your personal information to third parties.",
-            "Inquiry records are retained for as long as needed to serve your request and satisfy our record-keeping obligations, after which they are deleted.",
-          ],
-        },
-        {
-          heading: "Your Rights",
-          body: [
-            "You may request access to, correction of, or deletion of your personal information at any time by emailing info@mysite.com. We respond to verified requests within 30 days.",
-            "California residents may exercise additional rights under the CCPA/CPRA, including the right to know what personal information is collected and the right to opt out of any sale — note that we do not sell personal information.",
-          ],
-        },
-        {
-          heading: "Contact",
-          body: [
-            "Questions about this policy can be directed to Maison Estate, 500 Terry Francine St., San Francisco, CA 94158, or info@mysite.com.",
+          heading: "What to include in the Privacy Policy",
+          paragraphs: [
+            "Generally speaking, a Privacy Policy often addresses these types of issues: the types of information the website is collecting and the manner in which it collects the data; an explanation about why is the website collecting these types of information; what are the website's practices on sharing the information with third parties; ways in which your visitors and customers can exercise their rights according to the relevant privacy legislation; the specific practices regarding minors' data collection; and much, much more.",
           ],
         },
       ]}

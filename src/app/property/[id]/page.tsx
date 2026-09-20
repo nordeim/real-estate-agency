@@ -37,9 +37,9 @@ export default async function PropertyDetailPage({ params }: PageProps) {
   // global 404 page stays reserved for truly unknown routes.
   if (!property) {
     return (
-      <div>
+      <div className="min-h-screen flex flex-col">
         <SiteHeader />
-        <main className="pt-32 px-6 md:px-12 max-w-[1400px] mx-auto text-center py-24">
+        <main className="flex-1 pt-32 px-6 md:px-12 max-w-[1400px] mx-auto text-center py-24">
           <p className="font-display text-display-md">Property not found</p>
           <Link href="/properties" className="ghost-btn inline-block mt-8">
             Back to Collection
@@ -83,9 +83,11 @@ export default async function PropertyDetailPage({ params }: PageProps) {
   );
 
   return (
-    <div>
+    <div className="min-h-screen flex flex-col">
       <SiteHeader />
-      <main className="pt-24">
+      {/* The original's found-state detail layout is unobservable (its DB
+          is empty); pt-24 preserves the recon-derived layout. */}
+      <main className="flex-1 pt-24">
         <div className="px-[2%] max-w-[1600px] mx-auto mb-8">
           <Link
             href="/properties"

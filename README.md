@@ -5,7 +5,7 @@
 ![TypeScript](https://img.shields.io/badge/TypeScript-5-3178c6)
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind-4-38bdf8)
 ![Prisma](https://img.shields.io/badge/Prisma-6-2d3748)
-![Tests](https://img.shields.io/badge/tests-54%20vitest%20%C2%B7%2043%20e2e-brightgreen)
+![Tests](https://img.shields.io/badge/tests-54%20vitest%20%C2%B7%2058%20e2e-brightgreen)
 
 > A production-grade, enterprise-polished clone of the MAISON ESTATE luxury
 > real-estate application — rebuilt on Next.js 16 with the original's exact
@@ -162,7 +162,7 @@ Demo credentials are seeded on purpose to mirror the original application.
 
 ```bash
 bun run test        # unit + integration (54 tests, real SQLite DB)
-bun run test:e2e   # Playwright e2e (43 tests) — builds & boots the production
+bun run test:e2e   # Playwright e2e (58 tests) — builds & boots the production
                    # standalone server on :3003; E2E_BASE_URL reuses a running one
 bun run lint        # ESLint — must be clean
 bun run typecheck   # tsc --noEmit — must be clean
@@ -176,8 +176,11 @@ original app's page titles, the hero popover dropdowns, the served meta layer
 (description, og:*, twitter:*, favicon), `sitemap.xml` and `robots.txt`, the
 zero-match empty state with Clear Filters, the five-view auth card
 (transitions, literal error copy, OTP auto-advance, attempt countdown, the
-login-only toaster scope), and the full user flows — including
-inquiry/newsletter rows landing in the database and the demo login.
+login-only toaster scope), the full user flows — including
+inquiry/newsletter rows landing in the database and the demo login — the
+page chrome and measured geometry (flex-column wrapper, H1 viewport-tops,
+about hairlines + parallax band, the sell `#contact` anchor), and the legal
+pages' verbatim template copy.
 
 ## Screenshots
 
@@ -196,6 +199,9 @@ inquiry/newsletter rows landing in the database and the demo login.
 | Login — create account | `docs/screenshots/11-login-signup.png` |
 | Login — verify email | `docs/screenshots/12-login-verify.png` |
 | Listings — zero-match empty state | `docs/screenshots/13-properties-empty.png` |
+| Privacy Policy (verbatim template copy) | `docs/screenshots/14-privacy-page.png` |
+| Terms & Conditions (verbatim template copy) | `docs/screenshots/15-terms-page.png` |
+| Accessibility Statement (verbatim template copy) | `docs/screenshots/16-accessibility-page.png` |
 
 ## Deployment
 
@@ -217,7 +223,8 @@ Any Node host works. For production:
 | Parity iteration | ✅ Complete | Font-cascade fix, hero popover dropdowns, section structures (neighborhoods/services/sell/about/footer/404/login), original page titles |
 | SEO/metadata parity | ✅ Complete | Full OG/Twitter meta layer, SVG favicon wiring, sitemap.xml, robots.txt, per-page metadata helper |
 | Interactive-state parity | ✅ Complete | Five-view auth card w/ verification, zero-match empty state, Clear Filters, login-only toaster scope, newsletter success copy |
-| Quality gates | ✅ Complete | lint/typecheck clean, 54 unit + 43 e2e tests, production build verified |
+| Layout & copy parity | ✅ Complete | Flex-column page chrome w/ measured H1 geometry, verbatim Wix-template legal copy, about hairlines + parallax band, sell `#contact` anchor, visible hairlines |
+| Quality gates | ✅ Complete | lint/typecheck clean, 54 unit + 58 e2e tests, production build verified |
 | Docs & delivery | ✅ Complete | README, AGENTS.md, CLAUDE.md, PAD, screenshots, .env.example |
 
 ## License

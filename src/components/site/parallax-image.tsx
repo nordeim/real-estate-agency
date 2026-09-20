@@ -4,14 +4,22 @@ import { useRef } from "react";
 import { motion, useScroll, useTransform } from "framer-motion";
 
 /**
- * Full-bleed parallax image band that closes the home page (as the original).
+ * Full-bleed parallax image band — closes the home page (section,
+ * h-[280px] md:h-[600px]) and divides the about page's community and
+ * contact sections (div, h-[500px] md:h-[650px]), as on the original.
  */
 export function ParallaxImage({
   src,
   alt,
+  heightClassName = "h-[280px] md:h-[600px]",
+  wrapperAs = "section",
 }: {
   src: string;
   alt: string;
+  /** Band height classes — the two variants the original ships. */
+  heightClassName?: string;
+  /** The original's home band is a <section>, its about band a <div>. */
+  wrapperAs?: "section" | "div";
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({
@@ -20,10 +28,12 @@ export function ParallaxImage({
   });
   const y = useTransform(scrollYProgress, [0, 1], ["0%", "-15%"]);
 
+  const Wrapper = wrapperAs;
+
   return (
-    <section
+    <Wrapper
       ref={ref}
-      className="w-full h-[280px] md:h-[600px] overflow-hidden relative"
+      className={`w-full ${heightClassName} overflow-hidden relative`}
       aria-label={alt}
     >
       <motion.div
@@ -37,6 +47,6 @@ export function ParallaxImage({
           loading="lazy"
         />
       </motion.div>
-    </section>
+    </Wrapper>
   );
 }

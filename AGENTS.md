@@ -84,7 +84,35 @@ test:e2e**, then browser-verify the affected flow (see Verification below).
   Do not move the Toaster back into `layout.tsx`.
 - **framer-motion needs a client boundary.** In Server Components use the
   `<Reveal>` wrapper (`src/components/site/reveal.tsx`); only `"use client"`
-  components may import `motion` directly.
+  components may import `motion` directly. `<Reveal>` takes `yOffset`
+  (default 24; the legal pages pass 16 to match the original's gentler
+  entrance).
+- **Page chrome is a flex column on every content page:**
+  `div.min-h-screen.flex.flex-col > (fixed header · main.flex-1 · footer)`
+  so the footer pins to the viewport bottom on short pages. There is NO
+  universal `main.pt-24` — each page owns its own top padding
+  (properties/legal wrap content in `pt-32`/`pt-40` containers, the hero is
+  `h-screen` with `md:pt-[35vh]`). Guarded by `e2e/layout.spec.ts`, which
+  also pins the measured H1 viewport-tops (properties 140 · sell 172 ·
+  about 162 · legal 192 at 1280×576; the hero assertion is
+  viewport-relative because 35vh scales with height).
+- **Legal pages ship the original's Wix-template placeholder copy verbatim**
+  (`src/components/site/legal-page.tsx` + the three page files) — including
+  the "A legal disclaimer" boilerplate, "[only add if relevant]" italic
+  suffixes (preceded by a space), dash-prefixed `ul.space-y-2` lists, and
+  the exact template typos ("make sure you are", not "make sure that you
+  are"). Fidelity over polish: do not "improve" this copy. Pinned
+  byte-level by `e2e/legal.spec.ts`.
+- **The about page structure is load-bearing:** `main > div.pt-32.pb-24`
+  wrapping 8 children — hero · hairline · advisors · hairline · credentials
+  · community · parallax band · contact. The band is a
+  `div.h-[500px].md:h-[650px].overflow-hidden.relative` with a
+  `h-[140%] top-[-20%]` parallax inner (`<ParallaxImage height>` override,
+  image `public/media/pages/about-parallax.jpg`, alt "Luxury property").
+- **The sell page's contact anchor is an empty `div#contact`** with inline
+  `scroll-margin-top: 80px` rendered BEFORE the contact section (the
+  section itself carries no id) — `/sell#contact` links land exactly like
+  the original's.
 
 ## Domain conventions
 

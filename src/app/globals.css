@@ -146,7 +146,14 @@
 
 .hairline {
   height: 0.5px;
-  background: hsl(var(--border));
+  /* --border holds a FULL hsl() color — wrapping it in another hsl()
+     is invalid at computed-value time and silently falls back to a
+     transparent background (the dividers render invisible). Use the
+     token directly. (Do NOT "fix" .ghost-btn* the same way — their
+     hsl(var(--x)) declarations are invalid too, but their fallbacks
+     (transparent bg / currentColor border) are exactly what the
+     original renders; making them explicit would diverge.) */
+  background: var(--border);
 }
 
 .ghost-btn {
@@ -203,7 +210,7 @@
   background: transparent;
 }
 .scrollbar-thin::-webkit-scrollbar-thumb {
-  background: hsl(var(--border));
+  background: var(--border);
   border-radius: 9999px;
 }
 

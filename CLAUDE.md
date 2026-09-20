@@ -13,7 +13,10 @@ as a single-application TypeScript codebase with Prisma as the data layer.
 
 Key technical decisions: App Router with RSC data reads and Server Actions as
 the only mutation seam; Tailwind v4 CSS-first theming with the original app's
-exact design tokens; SQLite for zero-config local development with a
+exact design tokens; a flex-column page chrome (`min-h-screen flex flex-col`
++ `main.flex-1`) on every content page with per-page top padding (no global
+`pt-24`); legal pages that reproduce the original's Wix-template placeholder
+copy verbatim; SQLite for zero-config local development with a
 documented PostgreSQL production path; NextAuth v4 credentials auth seeded
 with the original app's demo user; the original's five-view auth card
 (reset / check-email / sign-up / verify-email) backed by validated server
@@ -43,6 +46,13 @@ actions with a bcrypt-hashed, attempt-limited email-verification challenge.
 - The URL is the state for the /properties filters — no mirror state.
 - Fidelity to the original app's design tokens is a feature: change
    `globals.css` tokens, not ad-hoc values in components.
+- Parity can be accidental and still correct: `.ghost-btn`'s
+   `hsl(var(--foreground))` declarations are invalid at computed-value time,
+   but their fallbacks (transparent bg, currentColor border) are exactly
+   what the original renders — leave them alone. `.hairline`'s identical
+   pattern, however, fell back to transparent and diverged (the original
+   paints a visible beige line), so it uses `var(--border)` directly.
+   When in doubt, measure the original's computed styles before "fixing".
 
 ## Implementation Standards
 
@@ -117,8 +127,11 @@ bun run dev                     # http://localhost:3000
   behavior, filter navigation, the zero-match empty state + Clear Filters,
   inquiry/newsletter persistence to the DB, the five-view auth card
   (transitions, literal error copy, OTP auto-advance, attempt countdown,
-  toaster scope), and login with the demo credentials. The db is symlinked
-  into the standalone tree so server and assertions share one SQLite file.
+  toaster scope), login with the demo credentials, the page-chrome/geometry
+  guards (flex-column wrapper, measured H1 viewport-tops, about structure,
+  `#contact` anchor, visible hairlines), and the legal pages' verbatim
+  template copy. The db is symlinked into the standalone tree so server and
+  assertions share one SQLite file.
 - **SEO routes**: `e2e/metadata.spec.ts` guards the served meta layer
   (description, og:*, twitter:*, favicon link) and `e2e/seo-routes.spec.ts`
   guards `/sitemap.xml`, `/robots.txt`, and the absence of stray API routes.
