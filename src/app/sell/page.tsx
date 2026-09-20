@@ -31,7 +31,7 @@ export default function SellPage() {
           <section className="pt-40 pb-24 md:pb-32 px-[2%] max-w-[1400px] mx-auto">
             <Reveal delay={0} duration={0.8}>
               <h1 className="font-display text-display-lg font-light mt-3 mb-6">
-                Ready to <span className="italic">sell?</span>
+                Ready to sell?
               </h1>
               <p className="font-body text-muted-foreground max-w-[600px] leading-relaxed text-base">
                 We understand that selling your property is one of the most

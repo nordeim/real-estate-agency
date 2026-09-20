@@ -58,7 +58,9 @@ test("neighborhood cards link to filtered listings with live counts", async ({
     /\/properties\?location=(Pacific\+Heights|Pacific%20Heights)/
   );
   await expect(
-    page.getByRole("combobox", { name: "Location filter" })
+    // The URL sets location=Pacific Heights, so the location trigger
+    // displays the selection (no aria-label — locate by text).
+    page.locator('button[role="combobox"]').filter({ hasText: "Pacific Heights" })
   ).toContainText("Pacific Heights");
 });
 
@@ -71,7 +73,10 @@ test("properties filters narrow the grid and update the count", async ({
     .filter({ hasText: /properties found/ })
     .textContent();
 
-  await page.getByLabel("Type filter").click();
+  await page
+    .locator('button[role="combobox"]')
+    .filter({ hasText: "All Types" })
+    .click();
   await page.getByRole("option", { name: "Penthouse" }).click();
   await page.waitForURL(/type=Penthouse/);
   const filteredCount = await page
@@ -91,9 +96,9 @@ test("property inquiry form persists to the database", async ({ page }) => {
   await page.waitForURL(/\/property\//);
 
   const email = `e2e-inquiry-${Date.now()}@example.com`;
-  await page.getByLabel("Full name").fill("E2E Inquiry Test");
-  await page.getByLabel("Email", { exact: true }).fill(email);
-  await page.getByLabel("Message").fill("Sent from the Playwright e2e suite.");
+  await page.getByPlaceholder("Full Name").fill("E2E Inquiry Test");
+  await page.getByPlaceholder("Email", { exact: true }).fill(email);
+  await page.getByPlaceholder("Your message...").fill("Sent from the Playwright e2e suite.");
 
   await page.getByRole("button", { name: /send inquiry/i }).click();
 
@@ -101,9 +106,9 @@ test("property inquiry form persists to the database", async ({ page }) => {
   // mounted ONLY on /login, so the inquiry form's toast() call is a
   // silent no-op and the form simply resets.
   await expect(
-    page.getByLabel("Full name")
+    page.getByPlaceholder("Full Name")
   ).toHaveValue("", { timeout: 10_000 });
-  await expect(page.getByLabel("Email", { exact: true })).toHaveValue("");
+  await expect(page.getByPlaceholder("Email", { exact: true })).toHaveValue("");
   await expect(page.getByText(/inquiry sent/i)).toHaveCount(0);
   await expect(
     page.locator("section[aria-label^='Notifications'], [data-sonner-toaster]")
@@ -127,7 +132,9 @@ test("footer newsletter persists as a sentinel inquiry", async ({ page }) => {
     .getByRole("textbox", { name: "Your email address" })
     .last()
     .fill(email);
-  await page.getByRole("button", { name: "Subscribe" }).last().click();
+  // The subscribe button is icon-only with no accessible name (the
+  // original exposes none) — locate it structurally.
+  await page.locator("footer form button[type='submit']").last().click();
   // The original's success line: plain uppercase tracking-label text,
   // no icon, no trailing period.
   const success = page.getByText(/thank you for subscribing/i);
@@ -162,7 +169,13 @@ test("login with the demo credentials redirects home", async ({ page }) => {
 test("mobile menu opens and navigates", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/");
-  await page.getByRole("button", { name: "Toggle menu" }).click();
+  // The original's global toast container covers the top 32px on mobile —
+  // the toggle's center is blocked, so click its lower part (the only
+  // tappable region, exactly like the original).
+  const toggle = page.getByRole("button", { name: "Toggle menu" });
+  const box = await toggle.boundingBox();
+  expect(box).not.toBeNull();
+  await page.mouse.click(box!.x + box!.width / 2, box!.y + box!.height - 6);
   await page.getByRole("link", { name: "Properties" }).first().click();
   await page.waitForURL(/\/properties/);
 });

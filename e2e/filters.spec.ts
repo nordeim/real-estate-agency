@@ -74,7 +74,7 @@ test("active filters surface the Clear Filters control, which resets the search"
   await clear.click();
   await page.waitForURL(/\/properties$/);
   await expect(
-    page.getByRole("combobox", { name: "Type filter" })
+    page.locator('button[role="combobox"]').filter({ hasText: "All Types" })
   ).toContainText("All Types");
   await expect(
     page.getByRole("button", { name: /clear filters/i })

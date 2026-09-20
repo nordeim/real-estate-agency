@@ -5,7 +5,7 @@
 ![TypeScript](https://img.shields.io/badge/TypeScript-5-3178c6)
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind-4-38bdf8)
 ![Prisma](https://img.shields.io/badge/Prisma-6-2d3748)
-![Tests](https://img.shields.io/badge/tests-54%20vitest%20%C2%B7%2058%20e2e-brightgreen)
+![Tests](https://img.shields.io/badge/tests-54%20vitest%20%C2%B7%2075%20e2e-brightgreen)
 
 > A production-grade, enterprise-polished clone of the MAISON ESTATE luxury
 > real-estate application — rebuilt on Next.js 16 with the original's exact
@@ -150,7 +150,7 @@ Demo credentials are seeded on purpose to mirror the original application.
 
 | Variable | Required | Default | Purpose |
 | --- | --- | --- | --- |
-| `DATABASE_URL` | ✅ | `file:./db/custom.db` | SQLite path, or a PostgreSQL URL (switch the Prisma provider to `postgresql` first) |
+| `DATABASE_URL` | ✅ | `file:../db/custom.db` | SQLite path resolved against `prisma/schema.prisma` (→ `<repo-root>/db/custom.db`), or a PostgreSQL URL (switch the Prisma provider to `postgresql` first) |
 | `NEXTAUTH_SECRET` | ✅ | — | Session signing secret (`openssl rand -base64 32`) |
 | `NEXTAUTH_URL` | ✅ | `http://localhost:3000` | Canonical origin for auth redirects |
 | `GOOGLE_CLIENT_ID` | ⬜ | — | Enables Google sign-in when set with the secret + flag |
@@ -162,7 +162,7 @@ Demo credentials are seeded on purpose to mirror the original application.
 
 ```bash
 bun run test        # unit + integration (54 tests, real SQLite DB)
-bun run test:e2e   # Playwright e2e (58 tests) — builds & boots the production
+bun run test:e2e   # Playwright e2e (75 tests) — builds & boots the production
                    # standalone server on :3003; E2E_BASE_URL reuses a running one
 bun run lint        # ESLint — must be clean
 bun run typecheck   # tsc --noEmit — must be clean
@@ -179,8 +179,11 @@ zero-match empty state with Clear Filters, the five-view auth card
 login-only toaster scope), the full user flows — including
 inquiry/newsletter rows landing in the database and the demo login — the
 page chrome and measured geometry (flex-column wrapper, H1 viewport-tops,
-about hairlines + parallax band, the sell `#contact` anchor), and the legal
-pages' verbatim template copy.
+about hairlines + parallax band, the sell `#contact` anchor), the legal
+pages' verbatim template copy, the hero H1 line-height cascade with 48px
+filter selects and the original's v1-style primitive base classes
+(`e2e/primitives.spec.ts`), and the global empty toast layer's page
+coverage plus mobile blocking geometry (`e2e/toast-layer.spec.ts`).
 
 ## Screenshots
 
@@ -224,7 +227,8 @@ Any Node host works. For production:
 | SEO/metadata parity | ✅ Complete | Full OG/Twitter meta layer, SVG favicon wiring, sitemap.xml, robots.txt, per-page metadata helper |
 | Interactive-state parity | ✅ Complete | Five-view auth card w/ verification, zero-match empty state, Clear Filters, login-only toaster scope, newsletter success copy |
 | Layout & copy parity | ✅ Complete | Flex-column page chrome w/ measured H1 geometry, verbatim Wix-template legal copy, about hairlines + parallax band, sell `#contact` anchor, visible hairlines |
-| Quality gates | ✅ Complete | lint/typecheck clean, 54 unit + 58 e2e tests, production build verified |
+| Cascade & primitive parity | ✅ Complete | Hero H1 line-height cascade (utilities beat brand classes), original v1-style shadcn primitive bases (48px selects, no data-slot attrs), global empty toast layer, native form validation, aria-label strip, db path at repo root |
+| Quality gates | ✅ Complete | lint/typecheck clean, 54 unit + 75 e2e tests, production build verified |
 | Docs & delivery | ✅ Complete | README, AGENTS.md, CLAUDE.md, PAD, screenshots, .env.example |
 
 ## License

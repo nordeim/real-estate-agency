@@ -74,15 +74,20 @@ actions with a bcrypt-hashed, attempt-limited email-verification challenge.
 - **React 19**: function components, hooks; derive state instead of
   syncing with effects; no `forwardRef` needed.
 - **Tailwind v4**: CSS-first — tokens in `globals.css` `@theme inline`; brand
-  utility classes (`.ghost-btn`, `.text-display-*`) defined there; no config
-  file.
+  utility classes (`.ghost-btn`, `.text-display-*`) defined there inside
+  `@layer components` (Tailwind utilities override them — the hero H1's
+  `leading-[0.9]` beats `.text-display-xl`, matching the original's
+  cascade); no config file.
 - **Prisma**: schema in `prisma/schema.prisma`; client via `@/lib/db`;
   JSON-array columns parsed through `parseJsonArray`.
 - **Auth flows**: the login card's views drive `src/actions/auth.ts`
   (sign-up → verify-email → sign-in; reset → check-email). Error copy is
   literal — it mirrors strings observed on the original. The sonner Toaster
   renders only on `/login` (original scope); toasts elsewhere are
-  intentional no-ops.
+  intentional no-ops. Every other page mounts the original's EMPTY global
+  toast container (`GlobalToastLayer` in the root layout — on mobile it
+  covers the top 32px, blocking the top of the hamburger toggle exactly
+  like the original).
 - **framer-motion**: only inside client components; use `<Reveal>` from
   `src/components/site/reveal.tsx` in server pages.
 
@@ -129,9 +134,12 @@ bun run dev                     # http://localhost:3000
   (transitions, literal error copy, OTP auto-advance, attempt countdown,
   toaster scope), login with the demo credentials, the page-chrome/geometry
   guards (flex-column wrapper, measured H1 viewport-tops, about structure,
-  `#contact` anchor, visible hairlines), and the legal pages' verbatim
-  template copy. The db is symlinked into the standalone tree so server and
-  assertions share one SQLite file.
+  `#contact` anchor, visible hairlines), the legal pages' verbatim
+  template copy, the hero H1 line-height cascade + 48px filter selects +
+  v1-style primitive base classes (`e2e/primitives.spec.ts`), and the
+  global toast layer's page coverage + mobile blocking geometry
+  (`e2e/toast-layer.spec.ts`). The db is symlinked into the standalone
+  tree so server and assertions share one SQLite file.
 - **SEO routes**: `e2e/metadata.spec.ts` guards the served meta layer
   (description, og:*, twitter:*, favicon link) and `e2e/seo-routes.spec.ts`
   guards `/sitemap.xml`, `/robots.txt`, and the absence of stray API routes.
@@ -215,7 +223,7 @@ The `User` model carries the email-verification challenge columns
 
 | Variable | Purpose | Example |
 | --- | --- | --- |
-| `DATABASE_URL` | SQLite file or Postgres URL | `file:./db/custom.db` |
+| `DATABASE_URL` | SQLite file or Postgres URL | `file:../db/custom.db` (Prisma-relative; resolves to `<repo-root>/db/custom.db`) |
 | `NEXTAUTH_SECRET` | Session signing secret | `openssl rand -base64 32` |
 | `NEXTAUTH_URL` | App canonical origin | `http://localhost:3000` |
 | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | Optional Google OAuth | (empty = hidden) |

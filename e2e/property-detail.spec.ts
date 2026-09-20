@@ -35,7 +35,9 @@ test("known property renders the detail page with stats and inquiry form", async
     page.getByRole("heading", { level: 1 })
   ).toBeVisible();
   await expect(page.getByText("Schedule a Viewing")).toBeVisible();
-  await expect(page.getByLabel(/inquiry type/i)).toBeVisible();
+  await expect(
+    page.locator('button[role="combobox"]').filter({ hasText: "Schedule a Tour" })
+  ).toBeVisible();
 });
 
 test("property detail back link returns to the listings", async ({ page }) => {

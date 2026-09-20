@@ -48,7 +48,11 @@ test:e2e**, then browser-verify the affected flow (see Verification below).
   `:root`. The brand classes `.ghost-btn`, `.ghost-btn-light`, `.hairline`,
   `.tracking-label`, `.tracking-editorial`, `.text-display-{xl,lg,md,sm}` are
   plain CSS defined in `globals.css` — use them instead of re-deriving values.
-  The `3xl` breakpoint (120rem) is declared in `@theme`.
+  They are declared inside `@layer components`, so Tailwind utilities WIN over
+  them (e.g. the hero H1's `leading-[0.9]` beats `.text-display-xl`'s
+  1.05 — the original's hero H1 is 184px on desktop precisely because of
+  that cascade; do NOT move these classes back out of the layer). The
+  `3xl` breakpoint (120rem) is declared in `@theme`.
 - **Fonts** load via `next/font/google` (Instrument Serif + Inter) and are
   exposed as `--font-display-src` / `--font-body`. Do not import Google Fonts
   by `<link>`.
@@ -81,7 +85,15 @@ test:e2e**, then browser-verify the affected flow (see Verification below).
   original — verified route-by-route). `inquiry-form-with-toast.tsx`
   still calls `toast()` on success; without a mounted Toaster that is
   a silent no-op and the form just resets, exactly like the original.
-  Do not move the Toaster back into `layout.tsx`.
+  Do not move the Toaster back into `layout.tsx`. What the root layout DOES
+  mount is `<GlobalToastLayer />` — the original's EMPTY global toast
+  container, present on every page except `/login`
+  (`src/components/site/global-toast-layer.tsx`): two nested
+  `div.fixed.top-0.z-[100]…` divs with no content. On mobile it covers the
+  top 32px full-width (blocking the top of the hamburger toggle — the menu
+  opens only from the lower part of the button, like the original); on
+  desktop it repositions to the bottom-right 420px slot where it blocks
+  nothing. This is fidelity, not a bug — pinned by `e2e/toast-layer.spec.ts`.
 - **framer-motion needs a client boundary.** In Server Components use the
   `<Reveal>` wrapper (`src/components/site/reveal.tsx`); only `"use client"`
   components may import `motion` directly. `<Reveal>` takes `yOffset`
@@ -112,7 +124,27 @@ test:e2e**, then browser-verify the affected flow (see Verification below).
 - **The sell page's contact anchor is an empty `div#contact`** with inline
   `scroll-margin-top: 80px` rendered BEFORE the contact section (the
   section itself carries no id) — `/sell#contact` links land exactly like
-  the original's.
+  the original's. The sell H1 is PLAIN text ("Ready to sell?" — no italic
+  span; the original's home/about H1s have the italic/not-italic nesting,
+  sell does not).
+- **The shadcn primitives in `src/components/ui/` are pinned to the
+  ORIGINAL's old v1-style base classes** (audited live via rendered
+  class-string extraction): `Input`/`Textarea` use `focus-visible:ring-1`
+  focus rings (not v4's `ring-[3px] ring-ring/50`), `shadow-sm` (not
+  `shadow-xs`), and NO `data-slot` attributes anywhere; `SelectTrigger` has
+  no `data-[size]:h-9` (usage `h-12` must render 48px, not 36px);
+  `SelectContent` uses `max-h-96` with NO scroll-up/down buttons and the
+  v1 `py-1.5 pl-2 pr-8` item with `span[aria-hidden]` indicator wrapper.
+  Do NOT "upgrade" them to current shadcn defaults — that divergence was
+  the S7-2 remediation, pinned byte-level by `e2e/primitives.spec.ts`.
+- **The original exposes NO aria-labels on chrome, filters, or form
+  fields** (logo, nav, mobile toggle, search input, filter selects,
+  inquiry/newsletter fields — none have them). The clone matches: write
+  e2e locators against placeholders/text/CSS, not aria-labels. The inquiry
+  form also has NO `noValidate` — the original fronts the client with
+  NATIVE browser validation (inputs are `required`, no custom error DOM
+  pre-submit); server-side Zod validation and the rate-limit alert still
+  guard the action seam.
 
 ## Domain conventions
 

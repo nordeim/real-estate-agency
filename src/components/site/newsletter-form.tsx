@@ -40,11 +40,7 @@ export function NewsletterForm() {
           onSubmit={onSubmit}
           className="flex items-center border-b border-background/20 pb-2 max-w-md"
         >
-          <label htmlFor="newsletter-email" className="sr-only">
-            Your email address
-          </label>
           <input
-            id="newsletter-email"
             type="email"
             required
             value={email}
@@ -55,8 +51,7 @@ export function NewsletterForm() {
           <button
             type="submit"
             disabled={isPending}
-            aria-label="Subscribe"
-            className="ml-4 text-background/60 hover:text-background transition-colors disabled:opacity-50"
+            className="ml-4 text-background/60 hover:text-background transition-colors"
           >
             <ArrowRight size={18} aria-hidden />
           </button>

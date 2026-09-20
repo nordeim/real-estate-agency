@@ -1,4 +1,4 @@
-# MAISON ESTATE — Master Project Architecture Document (PAD) v1.4
+# MAISON ESTATE — Master Project Architecture Document (PAD) v1.5
 
 **Classification:** Internal Engineering Reference
 **Status:** DEFINITIVE, PRODUCTION-LOCKED BLUEPRINT
@@ -11,6 +11,7 @@
 
 | Version | Date | Change | Tag |
 | --- | --- | --- | --- |
+| 1.5 | 2026-09-20 | Cascade & primitive parity: brand classes moved into `@layer components` so Tailwind utilities win (hero H1 `leading-[0.9]` → 184px desktop like the original); shadcn primitives rewritten to the original's v1-style base classes (48px filter selects — no `data-[size]:h-9`, `ring-1` focus, no `data-slot` attrs, no scroll buttons, v1 item indicator); global empty toast container replica on every page except /login (`GlobalToastLayer` — mobile top-32px blocking included); inquiry form native validation (no `noValidate`); aria-label strip to match the original; sell H1 plain text; `DATABASE_URL="file:../db/custom.db"` documented correctly (repo-root `db/`); primitives/toast-layer e2e suites (17 tests, total 75) | [CA] |
 | 1.4 | 2026-09-20 | Layout & copy parity: flex-column page chrome (`min-h-screen flex flex-col` + `main.flex-1`) on every content page with per-page top padding (universal `pt-24` removed; measured H1 viewport-tops now match the original on all pages); legal pages rewritten to the original's verbatim Wix-template copy (`legal-page.tsx`); about-page structure (2 hairlines + parallax band `h-[500px] md:h-[650px]`); sell `#contact` anchor div (scroll-margin-top 80px); `.hairline` visibility fix (`var(--border)` — was transparent); layout/legal e2e suites (15 tests) | [CA] |
 | 1.3 | 2026-09-20 | Interactive-state parity: five-view auth card (reset/check-email/create-account/verify-email) with `src/actions/auth.ts` + User verification columns; zero-match empty state + Clear Filters on /properties; login error alert + newsletter success copy alignment; sonner Toaster scoped to /login only (inquiry toast becomes an intentional no-op, mirroring the original); auth test suites (12 vitest + 9 e2e) | [CA] |
 | 1.2 | 2026-09-20 | SEO/metadata parity: `src/lib/seo.ts` + `pageMetadata()` on all pages, OG/Twitter layer, SVG favicon wiring, `sitemap.ts`/`robots.ts`, filter-width parity; scaffold purge (`/api` route, `tailwind.config.ts`, 44 unused ui components, hooks); SEO test suites (11 vitest + 8 e2e) | [CA] |
@@ -479,8 +480,22 @@ declarations are invalid at computed-value time, but their fallbacks
 (transparent bg / currentColor border) reproduce the original's rendering
 exactly — do not rewrite them; `.hairline` had the same pattern but its
 transparent fallback diverged, so it references `var(--border)` directly.
-shadcn primitives (Select, Input, Textarea) are
-restyled via the tokens — e.g. filter selects render as pills.
+The brand classes (including `.text-display-*`) are declared inside
+`@layer components`, so Tailwind utilities override them — the hero H1's
+`leading-[0.9]` beats `.text-display-xl`'s 1.05 line-height, which is why
+the original's hero H1 measures 184px on desktop (sessions 1–5 missed this
+because only H1 tops, not heights, were verified).
+shadcn primitives (Select, Input, Textarea) carry the ORIGINAL's old
+v1-style base classes (audited live): `focus-visible:ring-1` focus rings,
+`shadow-sm`, no `data-slot` attributes, `SelectTrigger` without
+`data-[size]:h-9` (usage `h-12` renders 48px), `SelectContent` `max-h-96`
+with no scroll buttons and the v1 `py-1.5 pl-2 pr-8` item +
+`span[aria-hidden]` indicator wrapper — pinned byte-level by
+`e2e/primitives.spec.ts`; do not "upgrade" them to current shadcn defaults.
+A `GlobalToastLayer` in the root layout replicates the original's empty
+global toast container on every page except `/login` — on mobile it covers
+the top 32px full-width (the menu opens only from the lower part of the
+toggle, like the original); pinned by `e2e/toast-layer.spec.ts`.
 
 ### 5.4 Motion
 
@@ -566,7 +581,7 @@ no privileged surface exists yet, so no permission matrix is warranted
 | Integration (actions, real DB) | `src/actions/inquiry.test.ts` | 7 | Validation paths, unknown inquiry type, not-found property, rate limiting, happy-path persistence, newsletter sentinel behavior |
 | Integration (auth, real DB) | `src/actions/auth.test.ts` | 12 | Sign-up validation with literal original copy, duplicate detection, unverified user + hashed expiring code + 5-attempt budget, verify/clear challenge, resend budget reset, reset-request oracle-free behavior |
 | Integration (queries, real DB) | `src/lib/queries.test.ts` | 15 | Filter-engine semantics (type/location/price-band boundaries/beds/search, conjunctive combos), neighborhood counts, hero option derivation |
-| E2E (Playwright, real Chromium) | `e2e/*.spec.ts` | 58 | Font-cascade regression guard, original page titles, hero popover dropdowns + navigation params, property not-found inline state, filter URL round-trips + per-filter widths + zero-match empty state + Clear Filters, served meta layer (description/og:*/twitter:*/favicon), `sitemap.xml` + `robots.txt`, stray-API-route absence, inquiry/newsletter persistence to the DB (silent reset, no toast outside /login), the five-view auth card (transitions, literal error copy, OTP auto-advance, attempt countdown, login-only toaster scope), demo login, mobile menu, page-chrome/geometry guards (flex-column wrapper on 7 content pages, measured H1 viewport-tops, about structure incl. hairlines + parallax band, sell `#contact` anchor, visible hairline color), and the legal pages' verbatim template copy (label, headings, lists, container geometry, exact typos) |
+| E2E (Playwright, real Chromium) | `e2e/*.spec.ts` | 75 | Font-cascade regression guard, original page titles, hero popover dropdowns + navigation params, property not-found inline state, filter URL round-trips + per-filter widths + zero-match empty state + Clear Filters, served meta layer (description/og:*/twitter:*/favicon), `sitemap.xml` + `robots.txt`, stray-API-route absence, inquiry/newsletter persistence to the DB (silent reset, no toast outside /login), the five-view auth card (transitions, literal error copy, OTP auto-advance, attempt countdown, login-only toaster scope), demo login, mobile menu, page-chrome/geometry guards (flex-column wrapper on 7 content pages, measured H1 viewport-tops, about structure incl. hairlines + parallax band, sell `#contact` anchor, visible hairline color), the legal pages' verbatim template copy (label, headings, lists, container geometry, exact typos), the hero H1 line-height cascade + mb-8 sentence offset + 48px filter selects + mobile filter pitch + v1-style primitive base classes (input/textarea/trigger/content/item, no data-slot attrs) + plain sell H1 + native validation + aria-label absence + newsletter structure (`e2e/primitives.spec.ts`), and the global empty toast layer (page coverage, /login exclusion, mobile top-32px blocking + lower-part menu opening, desktop bottom-right repositioning) (`e2e/toast-layer.spec.ts`) |
 
 ### 7.2 Test Patterns
 
@@ -614,7 +629,7 @@ bun run start   # serves the standalone build
 
 | Name | Required | Default | Description |
 | --- | --- | --- | --- |
-| `DATABASE_URL` | Yes | `file:./db/custom.db` | SQLite path (dev) or PostgreSQL URL (prod; switch provider first) |
+| `DATABASE_URL` | Yes | `file:../db/custom.db` | SQLite path (dev; Prisma-resolved against `prisma/schema.prisma` → `<repo-root>/db/custom.db`) or PostgreSQL URL (prod; switch provider first) |
 | `NEXTAUTH_SECRET` | Yes | — | Session signing secret; generate with `openssl rand -base64 32` |
 | `NEXTAUTH_URL` | Yes | `http://localhost:3000` | Canonical origin for auth callbacks/redirects |
 | `GOOGLE_CLIENT_ID` | No | — | Google OAuth client id |
@@ -693,6 +708,10 @@ never commit `.env`, `db/*.db`, logs, or scratch material.
 | Info | Properties filters are URL-driven (original is state-driven after URL hydration) | Shareable/back-forward-correct views; entry points (hero, neighborhood cards) interplay identically | Intentional improvement (ADR-004) |
 | Info | Legal pages ship the original's Wix-template placeholder copy verbatim | Includes boilerplate ("A legal disclaimer"), bracketed placeholders and the template's exact typos — fidelity over polish, pinned byte-level by `e2e/legal.spec.ts` | By design (v1.4) |
 | Info | `.ghost-btn`'s `hsl(var(--x))` CSS is invalid at computed-value time | Its fallbacks (transparent bg, currentColor border) are exactly what the original renders — the "bug" is load-bearing; only `.hairline` was fixed to `var(--border)` | By design (v1.4) |
+| Info | Global empty toast container blocks the top 32px on mobile (incl. the top of the hamburger toggle) | The original mounts this empty sonner-style wrapper on EVERY page — the menu opens only from the lower part of the button; reproduced bug-for-bug and pinned by `e2e/toast-layer.spec.ts` | By design (v1.5) |
+| Info | shadcn primitives intentionally use old v1-style bases (no `data-slot` attrs, `ring-1` focus, no scroll buttons) | Byte-matches the original's rendered classes; current-shadcn defaults diverge visibly (36px selects, 3px rings) — do not upgrade | By design (v1.5) |
+| Info | The original exposes no aria-labels on chrome/filters/form fields | Accessibility parity follows the original's actual DOM; e2e locators use placeholders/text/CSS instead | By design (v1.5) |
+| Info | Inquiry form uses NATIVE browser validation (no `noValidate`, no custom pre-submit error DOM) | Mirrors the original's client behavior; server-side Zod + rate-limit alerts still guard the action seam | By design (v1.5) |
 | Info | Clone DB is seeded (12 properties, 5 advisors); the original's live DB is empty | Data-driven surfaces (listing grids, advisor cards, counts) differ only by content — structure is byte-identical | By design (demo seed) |
 
 ---
@@ -725,6 +744,7 @@ never commit `.env`, `db/*.db`, logs, or scratch material.
 | `src/components/site/property-card.tsx` | Listing card with hover reveal + stamps |
 | `src/components/site/stamps.tsx` | Rotating NEW / OPEN HOUSE SVG badges |
 | `src/components/site/properties-filters.tsx` | URL-driven filter bar |
+| `src/components/site/global-toast-layer.tsx` | Fidelity artifact — the original's EMPTY global toast container on every page except /login (mobile top-32px blocking included) |
 | `src/components/site/inquiry-form.tsx` | Lead-capture form (action-wired) |
 | `prisma/schema.prisma` | Data model |
 | `prisma/seed.ts` | Idempotent seed + demo user |

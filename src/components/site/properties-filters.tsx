@@ -99,7 +99,6 @@ export function PropertiesFilters({ total }: { total: number }) {
             }}
             onBlur={commitSearch}
             placeholder="Search properties..."
-            aria-label="Search properties"
             className="pl-10 bg-transparent border-border font-body text-sm h-12"
           />
         </div>
@@ -110,7 +109,6 @@ export function PropertiesFilters({ total }: { total: number }) {
         >
           <SelectTrigger
             className={locationClasses}
-            aria-label="Location filter"
           >
             <SelectValue />
           </SelectTrigger>
@@ -129,7 +127,6 @@ export function PropertiesFilters({ total }: { total: number }) {
         >
           <SelectTrigger
             className={filterClasses}
-            aria-label="Type filter"
           >
             <SelectValue />
           </SelectTrigger>
@@ -148,7 +145,6 @@ export function PropertiesFilters({ total }: { total: number }) {
         >
           <SelectTrigger
             className={filterClasses}
-            aria-label="Price filter"
           >
             <SelectValue />
           </SelectTrigger>
@@ -167,7 +163,6 @@ export function PropertiesFilters({ total }: { total: number }) {
         >
           <SelectTrigger
             className={bedsClasses}
-            aria-label="Bedrooms filter"
           >
             <SelectValue />
           </SelectTrigger>

@@ -70,7 +70,7 @@ export function SiteHeader() {
       >
         <div className="w-full px-[4%] md:px-[2%]">
           <div className="flex items-center justify-between h-14 md:h-16">
-            <Link href="/" aria-label="MAISON ESTATE — home" className="relative z-10">
+            <Link href="/" className="relative z-10">
               <span
                 className={`font-display text-2xl md:text-3xl 3xl:text-4xl font-light tracking-editorial ${logoPrimary}`}
               >
@@ -83,7 +83,7 @@ export function SiteHeader() {
               </span>
             </Link>
 
-            <nav className="hidden md:flex items-center gap-6" aria-label="Primary">
+            <nav className="hidden md:flex items-center gap-6">
               {NAV_LINKS.map((link) => (
                 <Link
                   key={link.path}
@@ -115,7 +115,6 @@ export function SiteHeader() {
                 menuOpen ? "text-foreground" : isHome ? "text-white" : "text-foreground"
               }`}
               aria-label="Toggle menu"
-              aria-expanded={menuOpen}
             >
               {menuOpen ? <X size={24} /> : <Menu size={24} />}
             </button>
@@ -132,10 +131,7 @@ export function SiteHeader() {
             transition={{ duration: 0.5 }}
             className="fixed inset-0 z-40 bg-background flex flex-col items-start justify-center px-[4%]"
           >
-            <nav
-              className="flex flex-col items-start gap-6"
-              aria-label="Mobile primary"
-            >
+            <nav className="flex flex-col items-start gap-6">
               {NAV_LINKS.map((link, index) => (
                 <motion.div
                   key={link.path}

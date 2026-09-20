@@ -73,7 +73,11 @@ export function InquiryForm({ propertyId, propertyTitle, onSent }: InquiryFormPr
     "bg-transparent border-border/50 font-body text-sm h-12 rounded-[6px]";
 
   return (
-    <form onSubmit={onSubmit} className="space-y-5" noValidate>
+    // No `noValidate` — the original relies on NATIVE browser validation
+    // (its inputs are `required` and it renders no custom field-error DOM;
+    // measured live). Server-side Zod validation and the rate-limit
+    // alert still guard the action seam.
+    <form onSubmit={onSubmit} className="space-y-5">
       {propertyTitle && (
         <p className="font-body text-xs tracking-label uppercase text-muted-foreground mb-2">
           Inquiring about: {propertyTitle}
@@ -86,7 +90,6 @@ export function InquiryForm({ propertyId, propertyTitle, onSent }: InquiryFormPr
           value={form.fullName}
           onChange={(event) => setForm({ ...form, fullName: event.target.value })}
           required
-          aria-label="Full name"
           className={inputClasses}
         />
         {fieldError("fullName") && (
@@ -103,7 +106,6 @@ export function InquiryForm({ propertyId, propertyTitle, onSent }: InquiryFormPr
           value={form.email}
           onChange={(event) => setForm({ ...form, email: event.target.value })}
           required
-          aria-label="Email"
           className={inputClasses}
         />
         {fieldError("email") && (
@@ -117,7 +119,6 @@ export function InquiryForm({ propertyId, propertyTitle, onSent }: InquiryFormPr
         placeholder="Phone"
         value={form.phone}
         onChange={(event) => setForm({ ...form, phone: event.target.value })}
-        aria-label="Phone"
         className={inputClasses}
       />
 
@@ -127,10 +128,10 @@ export function InquiryForm({ propertyId, propertyTitle, onSent }: InquiryFormPr
           setForm({ ...form, inquiryType: value as FormState["inquiryType"] })
         }
       >
-        <SelectTrigger
-          className={`w-full ${inputClasses}`}
-          aria-label="Inquiry type"
-        >
+        {/* No explicit w-full — the primitive's base already carries it
+            (passing it again moves it to the tail position and diverges
+            from the original's rendered class order). */}
+        <SelectTrigger className={inputClasses}>
           <SelectValue placeholder="Select inquiry type" />
         </SelectTrigger>
         <SelectContent>
@@ -148,7 +149,6 @@ export function InquiryForm({ propertyId, propertyTitle, onSent }: InquiryFormPr
         onChange={(event) =>
           setForm({ ...form, preferredDate: event.target.value })
         }
-        aria-label="Preferred date"
         className={inputClasses}
       />
 
@@ -157,7 +157,6 @@ export function InquiryForm({ propertyId, propertyTitle, onSent }: InquiryFormPr
         value={form.message}
         onChange={(event) => setForm({ ...form, message: event.target.value })}
         rows={4}
-        aria-label="Message"
         className="bg-transparent border-border/50 font-body text-sm resize-none rounded-[6px]"
       />
 
