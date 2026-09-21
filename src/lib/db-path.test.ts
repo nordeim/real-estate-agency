@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import path from "node:path";
 import {
+  describeDatabaseTarget,
   findRepoRoot,
   resolveDatabaseUrl,
 } from "./db-path";
@@ -91,5 +92,63 @@ describe("resolveDatabaseUrl", () => {
     expect(resolveDatabaseUrl("file:../db/custom.db", "/tmp")).toBe(
       "file:../db/custom.db"
     );
+  });
+});
+
+describe("describeDatabaseTarget", () => {
+  // The wrapper contract: repo-development db:* commands run through
+  // scripts/with-db.ts, whose job is the deterministic repo-root SQLite.
+  // An environment-injected absolute file: URL pointing OUTSIDE the repo
+  // must be DESCRIBED (warning payload) so the wrapper can surface it —
+  // it silently redirected db:push/db:seed outside the repo in exactly
+  // that situation (stale exported DATABASE_URL shadowing the .env).
+
+  it("flags an absolute file: URL outside the repo root with a warning", () => {
+    const target = describeDatabaseTarget(
+      "file:/elsewhere/custom.db",
+      REPO_ROOT
+    );
+    expect(target.url).toBe("file:/elsewhere/custom.db");
+    expect(target.sqliteOutsideRepo).toBe(true);
+    expect(target.warning).toBeDefined();
+    expect(target.warning).toContain("/elsewhere/custom.db");
+    expect(target.warning).toMatch(/outside the repo/i);
+  });
+
+  it("does not flag an absolute file: URL that lives under the repo root", () => {
+    const inside = `file:${path.join(REPO_ROOT, "db", "custom.db")}`;
+    const target = describeDatabaseTarget(inside, REPO_ROOT);
+    expect(target.url).toBe(inside);
+    expect(target.sqliteOutsideRepo).toBe(false);
+    expect(target.warning).toBeUndefined();
+  });
+
+  it("does not flag the standard relative URL once resolved into the repo", () => {
+    const target = describeDatabaseTarget("file:../db/custom.db", REPO_ROOT);
+    expect(target.url).toBe(
+      `file:${path.join(REPO_ROOT, "db", "custom.db")}`
+    );
+    expect(target.sqliteOutsideRepo).toBe(false);
+    expect(target.warning).toBeUndefined();
+  });
+
+  it("does not flag postgres URLs (no repo-root concept applies)", () => {
+    const pg = "postgresql://maison:secret@localhost:5432/maison_dev";
+    const target = describeDatabaseTarget(pg, REPO_ROOT);
+    expect(target.url).toBe(pg);
+    expect(target.sqliteOutsideRepo).toBe(false);
+    expect(target.warning).toBeUndefined();
+  });
+
+  it("does not flag when no repo root is discoverable (deployment form)", () => {
+    const target = describeDatabaseTarget("file:../db/custom.db", "/tmp");
+    expect(target.sqliteOutsideRepo).toBe(false);
+    expect(target.warning).toBeUndefined();
+  });
+
+  it("passes undefined/empty URLs through with no verdict", () => {
+    expect(describeDatabaseTarget(undefined, REPO_ROOT).url).toBeUndefined();
+    expect(describeDatabaseTarget(undefined, REPO_ROOT).warning).toBeUndefined();
+    expect(describeDatabaseTarget("", REPO_ROOT).warning).toBeUndefined();
   });
 });

@@ -71,3 +71,54 @@ export function resolveDatabaseUrl(
 
   return `file:${path.resolve(path.join(root, "prisma"), filePath)}`;
 }
+
+/**
+ * A resolved database target plus the repo-root verdict the CLI wrapper
+ * (scripts/with-db.ts) surfaces. Exists because an environment-exported
+ * absolute `file:` URL pointing OUTSIDE the repo once silently redirected
+ * `db:push`/`db:seed` there (a stale exported DATABASE_URL shadows the
+ * repo `.env`); the wrapper now prints `warning` on stderr so the
+ * misdirection is immediately visible. Non-blocking: absolute paths
+ * remain the documented production form (docs/DEPLOYMENT.md §4).
+ */
+export interface DatabaseTarget {
+  /** The resolved URL (exactly what resolveDatabaseUrl returns). */
+  url: string | undefined;
+  /** True only for a SQLite file: URL that resolves outside the repo. */
+  sqliteOutsideRepo: boolean;
+  /** Human-readable warning for outside-repo SQLite targets. */
+  warning: string | undefined;
+}
+
+export function describeDatabaseTarget(
+  rawUrl: string | undefined,
+  anchor: string = process.cwd()
+): DatabaseTarget {
+  const url = resolveDatabaseUrl(rawUrl, anchor);
+  const root = findRepoRoot(anchor);
+
+  // No repo, no verdict — standalone deployments use absolute paths or
+  // Postgres by design, and there is no repo to be outside of.
+  if (!url || !url.startsWith("file:") || !root) {
+    return { url, sqliteOutsideRepo: false, warning: undefined };
+  }
+
+  const filePath = path.resolve(url.slice("file:".length));
+  const insideRepo =
+    filePath === root || filePath.startsWith(root + path.sep);
+
+  if (insideRepo) {
+    return { url, sqliteOutsideRepo: false, warning: undefined };
+  }
+
+  return {
+    url,
+    sqliteOutsideRepo: true,
+    warning:
+      `with-db: DATABASE_URL resolves OUTSIDE the repo — ${filePath}\n` +
+      `  The repo db lives at ${path.join(root, "db")} ` +
+      `(DATABASE_URL="file:../db/custom.db").\n` +
+      `  Using the configured value as-is (absolute paths are the ` +
+      `documented production form — docs/DEPLOYMENT.md §4).`,
+  };
+}

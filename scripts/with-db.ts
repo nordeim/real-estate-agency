@@ -17,7 +17,10 @@ import { spawn } from "node:child_process";
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { findRepoRoot, resolveDatabaseUrl } from "../src/lib/db-path";
+import {
+  describeDatabaseTarget,
+  findRepoRoot,
+} from "../src/lib/db-path";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = findRepoRoot(__dirname);
@@ -55,7 +58,15 @@ if (!rawUrl) {
   process.exit(1);
 }
 
-const resolved = resolveDatabaseUrl(rawUrl, REPO_ROOT);
+const target = describeDatabaseTarget(rawUrl, REPO_ROOT);
+if (target.warning) {
+  // Surface env-injected misdirection (e.g. a stale exported absolute
+  // DATABASE_URL that shadows the repo .env) instead of silently
+  // writing outside the repo. Non-blocking by design.
+  console.error(target.warning);
+}
+const resolved = target.url!;
+
 const [command, ...args] = process.argv.slice(2);
 
 if (!command) {
