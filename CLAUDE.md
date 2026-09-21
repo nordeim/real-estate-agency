@@ -134,7 +134,9 @@ deployments should use an absolute path or PostgreSQL — see
 - **Integration (infra)**: `src/lib/db-path.test.ts` — the repo-root
   SQLite resolution contract (relative `file:` URLs anchor at
   `prisma/schema.prisma`; absolute/Postgres passthrough; missing env
-  passthrough).
+  passthrough) and the `describeDatabaseTarget()` verdict the CLI
+  wrapper surfaces when an env-injected absolute URL points outside
+  the repo (stale-exported `DATABASE_URL` misdirection).
 - **Integration**: Server Actions (`src/actions/inquiry.test.ts`,
   `src/actions/auth.test.ts`) and the query/filter engine
   (`src/lib/queries.test.ts`) run against the real SQLite DB — validation
@@ -163,7 +165,7 @@ deployments should use an absolute path or PostgreSQL — see
 ### Test Commands
 
 ```bash
-bun run test                            # all unit/integration (71 tests)
+bun run test                            # all unit/integration (77 tests)
 bun run test:coverage                  # + coverage floors: 85% stmts /
                                         # 80% branches / 75% funcs / 85%
                                         # lines over src/lib + src/actions

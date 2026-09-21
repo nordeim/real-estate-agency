@@ -124,8 +124,17 @@ Installed, locked versions (verified with `bun pm ls` at distillation time):
 | Unit tests | vitest + @vitest/coverage-v8 | 5.0.1 | Node env; real SQLite DB; coverage thresholds 85/80/75/85 |
 | E2E tests | @playwright/test | 1.63.0 | Chromium; production standalone build on :3003 |
 | Icons | lucide-react | 0.525.0 | Sparse usage |
-| Carousel | embla-carousel-react | 8.6.0 | Used by the property gallery |
 | Runner/PM | bun + tsx | bun ≥1.1 · tsx 4.23.13 | All commands run through bun; seeds via tsx wrapped by `scripts/with-db.ts` |
+
+**Dependency hygiene (session 14):** 50 unused scaffold packages were pruned
+(26 unused `@radix-ui/*` — only `react-select` is imported — plus dnd-kit,
+`@mdxeditor/editor`, `@tanstack/*`, recharts, zustand, vaul, cmdk, uuid,
+date-fns, `z-ai-web-dev-sdk`, v3-era `tailwindcss-animate`, `sharp` (no
+`next/image` usage), …). `package.json` now carries exactly the 15 runtime +
+14 dev packages the app and its gates import. The property gallery is a
+hand-rolled `useState` thumbnail rail — no carousel library. Before adding
+any package, grep `src/ e2e/ scripts/ prisma/` for real imports first;
+the scaffold shipped ~50 that were never used.
 
 **Environment variables** (7 total — `.env.example` is the contract):
 
@@ -164,7 +173,7 @@ bun run dev                           # http://localhost:3000 (logs to dev.log)
 | `start` | serve the standalone build (production) |
 | `lint` | eslint (clean: 0 errors, 0 warnings) |
 | `typecheck` | `tsc --noEmit` |
-| `test` | vitest run — 71 tests (6→7 files) |
+| `test` | vitest run — 77 tests (7 files) |
 | `test:coverage` | vitest run --coverage — thresholds 85% stmts / 80% branches / 75% funcs / 85% lines over `src/lib/**` + `src/actions/**` (excl. `src/lib/auth.ts`, browser-surface) |
 | `test:e2e` | playwright test — 75 tests against the production standalone build (:3003) |
 | `test:all` | vitest + playwright |
@@ -175,8 +184,9 @@ bun run dev                           # http://localhost:3000 (logs to dev.log)
 
 - `next.config.ts` — `output: "standalone"`; optional `distDir` via
   `PROD_DIST_DIR` env (Playwright uses `.next-e2e` so builds never clobber
-  a running dev server); `ignoreBuildErrors: true` (tsc gate is the real
-  type check); `reactStrictMode: false`.
+  a running dev server); `ignoreBuildErrors: false` (session 14 — the
+  build itself type-checks, defense-in-depth beyond the tsc gate);
+  `reactStrictMode: false`.
 - `tsconfig.json` — `strict`, path alias `@/* → ./src/*`; excludes
   `skills`, `reference-ui`, `examples`.
 - `eslint.config.mjs` — next core-web-vitals + TS presets with most
@@ -606,7 +616,7 @@ Run in order; all must pass:
 ```bash
 bun run lint            # eslint — 0 errors, 0 warnings
 bun run typecheck       # tsc --noEmit — clean
-bun run test:coverage   # 71 vitest tests + coverage floors
+bun run test:coverage   # 77 vitest tests + coverage floors
                         # (85% stmts / 80% branches / 75% funcs / 85% lines)
 bun run test:e2e        # 75 Playwright tests against the production
                         # standalone build on :3003
@@ -1008,9 +1018,10 @@ Full ADRs with context/consequences/alternatives: PAD §1.3.
 | 8 (docs/session_10) | Infra hardening: db-path resolver, e2e determinism, hero byte-parity |
 | 9 (docs/session_11) | Operator log of session 8 |
 | 12 (docs/session_12) | Coverage thresholds + CI workflow + THIS SKILL.md; parity re-audit (zero drift) |
+| 14 (docs/session_14) | Dependency & build hardening: 50 unused deps pruned, `ignoreBuildErrors: false`, `describeDatabaseTarget()` outside-repo warning; parity re-audit (zero drift — mobile menu byte-identical) |
 
-Test progression: 54 vitest (session 9) → 66 (session 10) → **71** (session
-12) · e2e 75 since session 10.
+Test progression: 54 vitest (session 9) → 66 (session 10) → 71 (session
+12) → **77** (session 14) · e2e 75 since session 10.
 
 ## Appendix C: Live-Site Parity Validation Methodology
 
@@ -1038,7 +1049,7 @@ method (agent-browser, both desktop 1280×720 and mobile 375×667):
 | --- | --- |
 | Commands & gates | `AGENTS.md` (authoritative) + §3/§11 here |
 | Design tokens | `src/app/globals.css` + §4/§19 |
-| DB resolution contract | `src/lib/db-path.ts` (+12 tests) |
+| DB resolution contract | `src/lib/db-path.ts` (+18 tests) |
 | CLI wrapper | `scripts/with-db.ts` |
 | Mutation seam | `src/actions/inquiry.ts`, `src/actions/auth.ts` |
 | Read engine + DTOs | `src/lib/queries.ts` |

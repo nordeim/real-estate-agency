@@ -5,7 +5,7 @@
 ![TypeScript](https://img.shields.io/badge/TypeScript-5-3178c6)
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind-4-38bdf8)
 ![Prisma](https://img.shields.io/badge/Prisma-6-2d3748)
-![Tests](https://img.shields.io/badge/tests-71%20vitest%20%C2%B7%2075%20e2e-brightgreen)
+![Tests](https://img.shields.io/badge/tests-77%20vitest%20%C2%B7%2075%20e2e-brightgreen)
 
 > A production-grade, enterprise-polished clone of the MAISON ESTATE luxury
 > real-estate application — rebuilt on Next.js 16 with the original's exact
@@ -142,7 +142,7 @@ Production guidance (absolute paths, PostgreSQL) lives in
 
 1. Open <http://localhost:3000> — the video hero renders and "Featured
    Properties" shows six listings.
-2. `bun run test` prints `6 passed (6) / 71 passed (71)`.
+2. `bun run test` prints `7 passed (7) / 77 passed (77)`.
 3. Sign in at <http://localhost:3000/login> with
    `sepnetflix2023@outlook.com` / `$Abcd1234` — you are redirected home.
 4. On the same card, "Forgot password?" walks the reset → check-email
@@ -168,7 +168,7 @@ Demo credentials are seeded on purpose to mirror the original application.
 ## Testing
 
 ```bash
-bun run test            # unit + integration (71 tests, real SQLite DB)
+bun run test            # unit + integration (77 tests, real SQLite DB)
 bun run test:coverage   # same suite + coverage floors (85% stmts / 80%
                         # branches / 75% funcs / 85% lines on src/lib +
                         # src/actions)
@@ -249,7 +249,8 @@ Any Node host works. For production:
 | Layout & copy parity | ✅ Complete | Flex-column page chrome w/ measured H1 geometry, verbatim Wix-template legal copy, about hairlines + parallax band, sell `#contact` anchor, visible hairlines |
 | Cascade & primitive parity | ✅ Complete | Hero H1 line-height cascade (utilities beat brand classes), original v1-style shadcn primitive bases (48px selects, no data-slot attrs), global empty toast layer, native form validation, aria-label strip, db path at repo root |
 | Infra hardening | ✅ Complete | Deterministic repo-root SQLite resolution (`src/lib/db-path.ts` + `scripts/with-db.ts` wrapper + Playwright env resolution — no more db outside the repo), e2e hydration-race hardening, hero-dropdown DOM byte-parity (aria/role strip), `docs/DEPLOYMENT.md` |
-| Quality gates & CI | ✅ Complete | lint/typecheck clean, 71 unit (coverage-gated 85/80/75/85) + 75 e2e tests, production build verified, GitHub Actions CI on every push/PR to main |
+| Quality gates & CI | ✅ Complete | lint/typecheck clean, 77 unit (coverage-gated 85/80/75/85) + 75 e2e tests, production build verified (type-checking enforced at the build boundary), GitHub Actions CI on every push/PR to main |
+| Dependency hygiene | ✅ Complete | 50 unused scaffold dependencies pruned (26 unused `@radix-ui/*`, dnd-kit, recharts, zustand, z-ai-web-dev-sdk, …) — package.json carries only the 15 runtime + 14 dev packages the app and its gates actually use |
 | Docs & delivery | ✅ Complete | README, AGENTS.md, CLAUDE.md, PAD, screenshots, .env.example, `real-estate-agency_SKILL.md` (distilled engineering skill) |
 
 ## License

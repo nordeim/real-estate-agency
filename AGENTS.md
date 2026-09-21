@@ -25,7 +25,11 @@ loads `.env`, resolves the SQLite location to an absolute repo-root path via
 `src/lib/db-path.ts`, and only then spawns the wrapped command. The Prisma
 CLI/client would otherwise anchor relative `file:` URLs against the package
 root or CWD — placing `file:../db/custom.db` OUTSIDE the repo on a fresh
-clone.
+clone. When an environment-exported absolute `DATABASE_URL` points outside
+the repo (e.g. a stale sandbox value shadowing the repo `.env`), the wrapper
+prints a `with-db: DATABASE_URL resolves OUTSIDE the repo` warning on stderr
+(`describeDatabaseTarget()` in `src/lib/db-path.ts`) — non-blocking, since
+absolute paths are the documented production form.
 
 Gate order before considering work done: **lint → typecheck → test →
 test:e2e**, then browser-verify the affected flow (see Verification below).
