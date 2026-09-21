@@ -7,7 +7,7 @@ const nextConfig: NextConfig = {
   // dev server's default .next/. No effect when unset.
   ...(process.env.PROD_DIST_DIR ? { distDir: process.env.PROD_DIST_DIR } : {}),
   typescript: {
-    ignoreBuildErrors: true,
+    ignoreBuildErrors: false,
   },
   reactStrictMode: false,
 };
