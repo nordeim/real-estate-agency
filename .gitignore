@@ -48,7 +48,8 @@ yarn-error.log*
 .zscripts/
 reference-ui/
 tool-results/
-scripts/
+scripts/*
+!scripts/with-db.ts
 upload/
 worklog.md
 examples/
