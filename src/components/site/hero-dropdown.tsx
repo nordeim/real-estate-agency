@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { ChevronDown } from "lucide-react";
 
 export interface HeroDropdownProps {
-  /** Accessible description appended to the button label. */
+  /** Which sentence slot this dropdown fills (type/location/price). */
   label: string;
   options: readonly string[];
   value: string;
@@ -43,12 +43,12 @@ export function HeroDropdown({
 
   return (
     <div className="relative" ref={rootRef}>
+      {/* The original's triggers carry NO aria attributes and no type
+          attr (verified live — only the class survives); the accessible
+          name falls back to the visible text, e.g. "Any Type". These
+          buttons live outside any form, so the submit default is moot. */}
       <button
-        type="button"
         onClick={() => setOpen((current) => !current)}
-        aria-haspopup="listbox"
-        aria-expanded={open}
-        aria-label={`${label}: ${value}`}
         className="inline-flex items-center gap-2 text-white/90 hover:text-white transition-colors border-b border-white/30 pb-1"
       >
         <span className="font-display text-lg md:text-xl italic">{value}</span>
@@ -60,17 +60,14 @@ export function HeroDropdown({
       </button>
 
       {open && (
+        // Plain div + plain buttons, byte-matching the original's popover
+        // DOM (no role=listbox/option, no aria-selected/label).
         <div
-          role="listbox"
-          aria-label={label}
           className="absolute top-full left-0 mt-2 bg-white backdrop-blur-xl border border-white/20 shadow-lg min-w-[200px] z-10 rounded"
         >
           {options.map((option) => (
             <button
               key={option}
-              type="button"
-              role="option"
-              aria-selected={option === value}
               onClick={() => {
                 onChange(option);
                 setOpen(false);

@@ -97,6 +97,10 @@ test("filter select triggers are 48px tall like the original (h-12 applies)", as
   page,
 }) => {
   await page.goto("/properties");
+  // The filter bar streams inside a Suspense boundary (useSearchParams
+  // deopts to client rendering) — wait for it instead of racing the
+  // hydration window between 'load' and mount.
+  await page.waitForSelector('button[role="combobox"]');
   const heights = await page.evaluate(() =>
     [...document.querySelectorAll('button[role="combobox"]')].map((b) =>
       Math.round(b.getBoundingClientRect().height)
@@ -111,6 +115,7 @@ test("mobile filter rows wrap at the original's pitch (64px, not 52px)", async (
 }) => {
   await page.setViewportSize({ width: 375, height: 812 });
   await page.goto("/properties");
+  await page.waitForSelector('button[role="combobox"]');
   await page.waitForTimeout(800);
 
   const rows = await page.evaluate(() => {
@@ -151,6 +156,8 @@ test("properties search input carries the original's base + rounded-md tail", as
   page,
 }) => {
   await page.goto("/properties");
+  // Streams with the filter-bar Suspense boundary — wait, don't race it.
+  await page.waitForSelector("main input");
 
   const cls = await page.evaluate(
     () => document.querySelector("main input")!.className
@@ -236,6 +243,7 @@ test("the original exposes no aria-labels on chrome, filters, or form fields", a
   page,
 }) => {
   await page.goto("/properties");
+  await page.waitForSelector("main input");
 
   const chrome = await page.evaluate(() => ({
     logo: document.querySelector("header a")!.getAttribute("aria-label"),
@@ -255,6 +263,26 @@ test("the original exposes no aria-labels on chrome, filters, or form fields", a
   expect(chrome.nav).toBeNull();
   expect(chrome.searchInput).toBeNull();
   expect(chrome.toggleExpanded).toBeNull();
+
+  // The hero's sentence dropdowns expose NO aria attributes on the
+  // original — triggers carry only their class, the popover is a plain
+  // div, options are plain buttons (no role=option/aria-selected).
+  await page.goto("/");
+  await page.waitForTimeout(1200); // hero entrance settles
+  const heroAria = await page.evaluate(() => {
+    const trigger = [...document.querySelectorAll("button")].find((b) =>
+      b.textContent.trim() === "Any Type"
+    )!;
+    const attrs = [...trigger.attributes].filter(
+      (a) => a.name !== "class"
+    );
+    return {
+      triggerAria: attrs.map((a) => a.name),
+      triggerAriaLabel: trigger.getAttribute("aria-label"),
+    };
+  });
+  expect(heroAria.triggerAria).toEqual([]);
+  expect(heroAria.triggerAriaLabel).toBeNull();
 
   await page.goto("/sell");
   const formAria = await page.evaluate(() => ({
