@@ -118,6 +118,7 @@ deployments should use an absolute path or PostgreSQL — see
 | `bun run lint` | ESLint (Next.js core-web-vitals + TS rules) |
 | `bun run typecheck` | `tsc --noEmit` |
 | `bun run test` | Vitest unit/integration suite |
+| `bun run test:coverage` | Same suite + coverage thresholds (85/80/75/85) |
 | `bun run test:e2e` | Playwright e2e (builds a standalone server on :3003; `E2E_BASE_URL` reuses a running one) |
 | `bun run db:push` | Apply schema to the database (via `scripts/with-db.ts`) |
 | `bun run db:seed` | Idempotent seed (12 properties, 5 advisors, 5 testimonials, demo user) |
@@ -126,8 +127,10 @@ deployments should use an absolute path or PostgreSQL — see
 
 ### Test Pyramid
 
-- **Unit**: pure helpers (`src/lib/format.test.ts`) — formatting, JSON-array
-  parsing, canonical constants and price-band contiguity.
+- **Unit**: pure helpers (`src/lib/format.test.ts`, `src/lib/utils.test.ts`)
+  — formatting, JSON-array parsing, canonical constants and price-band
+  contiguity, `cn` class-merge semantics (conflict resolution guards the
+  rendered geometry).
 - **Integration (infra)**: `src/lib/db-path.test.ts` — the repo-root
   SQLite resolution contract (relative `file:` URLs anchor at
   `prisma/schema.prisma`; absolute/Postgres passthrough; missing env
@@ -160,12 +163,22 @@ deployments should use an absolute path or PostgreSQL — see
 ### Test Commands
 
 ```bash
-bun run test                            # all unit/integration
-bun run test:e2e                       # full e2e (production build)
+bun run test                            # all unit/integration (71 tests)
+bun run test:coverage                  # + coverage floors: 85% stmts /
+                                        # 80% branches / 75% funcs / 85%
+                                        # lines over src/lib + src/actions
+                                        # (src/lib/auth.ts excluded — its
+                                        # authorize path is pinned by e2e)
+bun run test:e2e                       # full e2e (production build, 75 tests)
 E2E_BASE_URL=http://localhost:3000 \
   bun run test:e2e                     # e2e against a running dev server
 bunx vitest run src/lib/format.test.ts # one file
 ```
+
+CI (`.github/workflows/ci.yml`) runs the full gate sequence — lint →
+typecheck → test:coverage → test:e2e — on every push and pull request to
+`main` from a cold checkout (`.env` from the example, seeded db, Chromium
+with system deps).
 
 ## Code Quality Standards
 

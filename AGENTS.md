@@ -13,6 +13,7 @@ README or the Project Architecture Document (PAD).
 | Lint | `bun run lint` |
 | Typecheck | `bun run typecheck` |
 | Unit/integration tests | `bun run test` (Vitest, real SQLite DB required) |
+| Coverage gate | `bun run test:coverage` (adds the 85/80/75/85 thresholds over `src/lib` + `src/actions`) |
 | E2E tests | `bun run test:e2e` (Playwright — builds a standalone server on :3003; set `E2E_BASE_URL` to reuse a running one) |
 | Single test file | `bunx vitest run src/lib/format.test.ts` |
 | DB push schema | `bun run db:push` |
@@ -28,6 +29,8 @@ clone.
 
 Gate order before considering work done: **lint → typecheck → test →
 test:e2e**, then browser-verify the affected flow (see Verification below).
+CI (`.github/workflows/ci.yml`) runs the same sequence (with test:coverage
+in place of test) on every push/PR to `main` — keep it green.
 
 ## Stack facts agents get wrong
 
@@ -191,6 +194,11 @@ test:e2e**, then browser-verify the affected flow (see Verification below).
 
 - After any change, run the gate
   (`bun run lint && bun run typecheck && bun run test && bun run test:e2e`).
+  For the coverage floors (85% stmts / 80% branches / 75% funcs / 85%
+  lines on `src/lib` + `src/actions`, `src/lib/auth.ts` excluded as
+  browser-surface), run `bun run test:coverage`.
+- Deep codebase context (design system, anti-patterns, debugging guide,
+  parity constraints): `real-estate-agency_SKILL.md` at the repo root.
 - E2E tests that measure DOM straight after `page.goto` MUST
   `waitForSelector` the element first when it lives inside the
   /properties filter bar — `PropertiesFilters` uses `useSearchParams`

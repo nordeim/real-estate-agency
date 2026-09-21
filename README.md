@@ -5,7 +5,7 @@
 ![TypeScript](https://img.shields.io/badge/TypeScript-5-3178c6)
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind-4-38bdf8)
 ![Prisma](https://img.shields.io/badge/Prisma-6-2d3748)
-![Tests](https://img.shields.io/badge/tests-66%20vitest%20%C2%B7%2075%20e2e-brightgreen)
+![Tests](https://img.shields.io/badge/tests-71%20vitest%20%C2%B7%2075%20e2e-brightgreen)
 
 > A production-grade, enterprise-polished clone of the MAISON ESTATE luxury
 > real-estate application — rebuilt on Next.js 16 with the original's exact
@@ -142,7 +142,7 @@ Production guidance (absolute paths, PostgreSQL) lives in
 
 1. Open <http://localhost:3000> — the video hero renders and "Featured
    Properties" shows six listings.
-2. `bun run test` prints `6 passed (6) / 66 passed (66)`.
+2. `bun run test` prints `6 passed (6) / 71 passed (71)`.
 3. Sign in at <http://localhost:3000/login> with
    `sepnetflix2023@outlook.com` / `$Abcd1234` — you are redirected home.
 4. On the same card, "Forgot password?" walks the reset → check-email
@@ -168,18 +168,29 @@ Demo credentials are seeded on purpose to mirror the original application.
 ## Testing
 
 ```bash
-bun run test        # unit + integration (66 tests, real SQLite DB)
-bun run test:e2e   # Playwright e2e (75 tests) — builds & boots the production
-                   # standalone server on :3003; E2E_BASE_URL reuses a running one
-bun run lint        # ESLint — must be clean
-bun run typecheck   # tsc --noEmit — must be clean
+bun run test            # unit + integration (71 tests, real SQLite DB)
+bun run test:coverage   # same suite + coverage floors (85% stmts / 80%
+                        # branches / 75% funcs / 85% lines on src/lib +
+                        # src/actions)
+bun run test:e2e       # Playwright e2e (75 tests) — builds & boots the production
+                        # standalone server on :3003; E2E_BASE_URL reuses a running one
+bun run lint            # ESLint — must be clean
+bun run typecheck       # tsc --noEmit — must be clean
 ```
+
+CI (`.github/workflows/ci.yml`) runs the same four gates — lint →
+typecheck → test:coverage → e2e — on every push and pull request to
+`main`, from a cold checkout (`.env` from the example, seeded db,
+Chromium with system deps). The repo also ships
+`real-estate-agency_SKILL.md` — the distilled engineering reference
+covering the design system, anti-patterns, debugging guide, and every
+hard-won lesson from the build.
 
 Integration tests run the real Server Actions and query engine against the
 local SQLite database (validation failures, rate limiting, not-found guards,
 persistence, filter semantics, the SEO metadata helper, the repo-root
-database-path resolution contract, and the full sign-up → verify
-challenge). The e2e suite guards the font cascade, the
+database-path resolution contract, the `cn` class-merge helper, and the
+full sign-up → verify challenge). The e2e suite guards the font cascade, the
 original app's page titles, the hero popover dropdowns, the served meta layer
 (description, og:*, twitter:*, favicon), `sitemap.xml` and `robots.txt`, the
 zero-match empty state with Clear Filters, the five-view auth card
@@ -238,8 +249,8 @@ Any Node host works. For production:
 | Layout & copy parity | ✅ Complete | Flex-column page chrome w/ measured H1 geometry, verbatim Wix-template legal copy, about hairlines + parallax band, sell `#contact` anchor, visible hairlines |
 | Cascade & primitive parity | ✅ Complete | Hero H1 line-height cascade (utilities beat brand classes), original v1-style shadcn primitive bases (48px selects, no data-slot attrs), global empty toast layer, native form validation, aria-label strip, db path at repo root |
 | Infra hardening | ✅ Complete | Deterministic repo-root SQLite resolution (`src/lib/db-path.ts` + `scripts/with-db.ts` wrapper + Playwright env resolution — no more db outside the repo), e2e hydration-race hardening, hero-dropdown DOM byte-parity (aria/role strip), `docs/DEPLOYMENT.md` |
-| Quality gates | ✅ Complete | lint/typecheck clean, 66 unit + 75 e2e tests, production build verified |
-| Docs & delivery | ✅ Complete | README, AGENTS.md, CLAUDE.md, PAD, screenshots, .env.example |
+| Quality gates & CI | ✅ Complete | lint/typecheck clean, 71 unit (coverage-gated 85/80/75/85) + 75 e2e tests, production build verified, GitHub Actions CI on every push/PR to main |
+| Docs & delivery | ✅ Complete | README, AGENTS.md, CLAUDE.md, PAD, screenshots, .env.example, `real-estate-agency_SKILL.md` (distilled engineering skill) |
 
 ## License
 
