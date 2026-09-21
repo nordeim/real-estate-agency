@@ -102,6 +102,14 @@ bun run db:push && bun run db:seed
 bun run dev                     # http://localhost:3000
 ```
 
+The SQLite file lands at `<repo>/db/custom.db` regardless of the working
+directory: `src/lib/db-path.ts` anchors the relative
+`DATABASE_URL="file:../db/custom.db"` against `prisma/schema.prisma`
+(Prisma-schema semantics) for the app client, and `scripts/with-db.ts`
+wraps every `db:*` CLI command with the same resolution. Production
+deployments should use an absolute path or PostgreSQL — see
+`docs/DEPLOYMENT.md`.
+
 ### Build Commands
 
 | Command | Purpose |
@@ -111,7 +119,7 @@ bun run dev                     # http://localhost:3000
 | `bun run typecheck` | `tsc --noEmit` |
 | `bun run test` | Vitest unit/integration suite |
 | `bun run test:e2e` | Playwright e2e (builds a standalone server on :3003; `E2E_BASE_URL` reuses a running one) |
-| `bun run db:push` | Apply schema to the database |
+| `bun run db:push` | Apply schema to the database (via `scripts/with-db.ts`) |
 | `bun run db:seed` | Idempotent seed (12 properties, 5 advisors, 5 testimonials, demo user) |
 
 ## Testing Strategy
@@ -120,6 +128,10 @@ bun run dev                     # http://localhost:3000
 
 - **Unit**: pure helpers (`src/lib/format.test.ts`) — formatting, JSON-array
   parsing, canonical constants and price-band contiguity.
+- **Integration (infra)**: `src/lib/db-path.test.ts` — the repo-root
+  SQLite resolution contract (relative `file:` URLs anchor at
+  `prisma/schema.prisma`; absolute/Postgres passthrough; missing env
+  passthrough).
 - **Integration**: Server Actions (`src/actions/inquiry.test.ts`,
   `src/actions/auth.test.ts`) and the query/filter engine
   (`src/lib/queries.test.ts`) run against the real SQLite DB — validation
@@ -138,8 +150,9 @@ bun run dev                     # http://localhost:3000
   template copy, the hero H1 line-height cascade + 48px filter selects +
   v1-style primitive base classes (`e2e/primitives.spec.ts`), and the
   global toast layer's page coverage + mobile blocking geometry
-  (`e2e/toast-layer.spec.ts`). The db is symlinked into the standalone
-  tree so server and assertions share one SQLite file.
+  (`e2e/toast-layer.spec.ts`). The runner resolves `DATABASE_URL` to the
+  absolute repo-root path in `playwright.config.ts` so the DB-asserting
+  specs and the webServer share one SQLite file.
 - **SEO routes**: `e2e/metadata.spec.ts` guards the served meta layer
   (description, og:*, twitter:*, favicon link) and `e2e/seo-routes.spec.ts`
   guards `/sitemap.xml`, `/robots.txt`, and the absence of stray API routes.

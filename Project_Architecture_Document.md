@@ -1,4 +1,4 @@
-# MAISON ESTATE — Master Project Architecture Document (PAD) v1.5
+# MAISON ESTATE — Master Project Architecture Document (PAD) v1.6
 
 **Classification:** Internal Engineering Reference
 **Status:** DEFINITIVE, PRODUCTION-LOCKED BLUEPRINT
@@ -11,6 +11,7 @@
 
 | Version | Date | Change | Tag |
 | --- | --- | --- | --- |
+| 1.6 | 2026-09-21 | Infra hardening: deterministic repo-root SQLite resolution — `src/lib/db-path.ts` (schema-anchored `resolveDatabaseUrl()`, pure Node, pinned by `src/lib/db-path.test.ts`, 12 tests) wired into the Prisma client (`datasourceUrl`), the `scripts/with-db.ts` CLI wrapper (all `db:*` scripts), and `playwright.config.ts` (runner + webServer get the resolved absolute URL; the standalone-tree db symlink staging removed — the app now resolves the path itself); e2e hydration-race hardening (filter-bar `waitForSelector` — `useSearchParams` Suspense streams after the shell); hero-dropdown DOM byte-parity (aria/role/type strip to match the original's attribute-free buttons, pinned in `e2e/primitives.spec.ts`); `docs/DEPLOYMENT.md`; stray `download/` scaffold removed; total tests 66 vitest + 75 e2e | [CA] |
 | 1.5 | 2026-09-20 | Cascade & primitive parity: brand classes moved into `@layer components` so Tailwind utilities win (hero H1 `leading-[0.9]` → 184px desktop like the original); shadcn primitives rewritten to the original's v1-style base classes (48px filter selects — no `data-[size]:h-9`, `ring-1` focus, no `data-slot` attrs, no scroll buttons, v1 item indicator); global empty toast container replica on every page except /login (`GlobalToastLayer` — mobile top-32px blocking included); inquiry form native validation (no `noValidate`); aria-label strip to match the original; sell H1 plain text; `DATABASE_URL="file:../db/custom.db"` documented correctly (repo-root `db/`); primitives/toast-layer e2e suites (17 tests, total 75) | [CA] |
 | 1.4 | 2026-09-20 | Layout & copy parity: flex-column page chrome (`min-h-screen flex flex-col` + `main.flex-1`) on every content page with per-page top padding (universal `pt-24` removed; measured H1 viewport-tops now match the original on all pages); legal pages rewritten to the original's verbatim Wix-template copy (`legal-page.tsx`); about-page structure (2 hairlines + parallax band `h-[500px] md:h-[650px]`); sell `#contact` anchor div (scroll-margin-top 80px); `.hairline` visibility fix (`var(--border)` — was transparent); layout/legal e2e suites (15 tests) | [CA] |
 | 1.3 | 2026-09-20 | Interactive-state parity: five-view auth card (reset/check-email/create-account/verify-email) with `src/actions/auth.ts` + User verification columns; zero-match empty state + Clear Filters on /properties; login error alert + newsletter success copy alignment; sonner Toaster scoped to /login only (inquiry toast becomes an intentional no-op, mirroring the original); auth test suites (12 vitest + 9 e2e) | [CA] |
@@ -421,6 +422,22 @@ erDiagram
 
 ### 4.3 Persistence Strategy
 
+**Database location (v1.6):** the SQLite file lives at `<repo>/db/custom.db`.
+The relative `DATABASE_URL="file:../db/custom.db"` is anchored at
+`prisma/schema.prisma` (classic Prisma semantics) by
+`src/lib/db-path.ts` — a dependency-free resolver (node builtins only)
+that walks up from the process CWD to find the repo root, resolves the
+relative `file:` URL against `prisma/`, and passes absolute URLs and
+Postgres URLs through untouched. Why: Prisma 6.19 anchors env-provided
+relative `file:` URLs against the package root (CLI) or CWD (client
+runtime), which placed the db OUTSIDE the repo on a fresh clone. The
+resolver is consumed by the app client (`src/lib/db.ts` →
+`datasourceUrl`), the CLI wrapper (`scripts/with-db.ts` — runs
+`db:push`/`db:seed`/`db:migrate`/`db:reset` with the resolved absolute
+URL), and `playwright.config.ts` (exports it so the DB-asserting specs
+and the webServer share one file). Contract pinned by
+`src/lib/db-path.test.ts`.
+
 Reads: RSC pages call `queries.ts` functions; listing pages are
 `force-dynamic`. Writes: Server Actions only, validated by Zod, rate-limited
 (5 submissions / 60s / email in-process), wrapped in try/catch that logs
@@ -428,7 +445,7 @@ context and returns `INTERNAL` on unexpected failure. Seeding is idempotent —
 properties upsert by `title`, agents by `email`, the demo user by `email`;
 testimonials are cleared and re-created. `db:push` (not migrations) is the
 documented local path; production may adopt `prisma migrate` once the
-PostgreSQL provider switch is made.
+PostgreSQL provider switch is made (see `docs/DEPLOYMENT.md`).
 
 ---
 
@@ -577,6 +594,7 @@ no privileged surface exists yet, so no permission matrix is warranted
 | Level | Location | Count | Covers |
 | --- | --- | --- | --- |
 | Unit | `src/lib/format.test.ts` | 9 | Price/sqft formatting, JSON-array parsing, canonical constants and price-band contiguity |
+| Integration (infra) | `src/lib/db-path.test.ts` | 12 | Repo-root SQLite resolution contract: schema-anchored relative `file:` URLs, absolute/Postgres passthrough, missing-env passthrough, nested-CWD root discovery |
 | Unit (SEO) | `src/lib/seo.test.ts` | 11 | Site constants verbatim from the original; `pageMetadata()` full OG/Twitter emission, per-page description pattern, og:image/url/site-name, twitter card |
 | Integration (actions, real DB) | `src/actions/inquiry.test.ts` | 7 | Validation paths, unknown inquiry type, not-found property, rate limiting, happy-path persistence, newsletter sentinel behavior |
 | Integration (auth, real DB) | `src/actions/auth.test.ts` | 12 | Sign-up validation with literal original copy, duplicate detection, unverified user + hashed expiring code + 5-attempt budget, verify/clear challenge, resend budget reset, reset-request oracle-free behavior |
@@ -590,9 +608,14 @@ asserting observable behavior: returned `ActionResult` codes and persisted
 rows. Unique emails per case prevent cross-test rate-limit coupling; the
 rate-limit test intentionally floods one address. The e2e suite runs against
 the **production standalone build** by default (isolated distDir via
-`PROD_DIST_DIR`, static assets staged at `standalone/<distDir>/static`, db
-symlinked so the server and the test's PrismaClient share one SQLite file);
-`E2E_BASE_URL` reuses an already-running server (e.g. dev).
+`PROD_DIST_DIR`, static assets staged at `standalone/<distDir>/static`);
+`playwright.config.ts` resolves `DATABASE_URL` to the absolute repo-root
+SQLite path before anything spawns, so the server and the test's
+PrismaClient share one file without any staging step; `E2E_BASE_URL`
+reuses an already-running server (e.g. dev). Tests that measure the
+/properties filter bar DOM must `waitForSelector` first — the bar streams
+inside a Suspense boundary (`useSearchParams`) and a bare evaluate races
+its hydration.
 
 ### 7.3 Coverage Thresholds
 
@@ -629,7 +652,7 @@ bun run start   # serves the standalone build
 
 | Name | Required | Default | Description |
 | --- | --- | --- | --- |
-| `DATABASE_URL` | Yes | `file:../db/custom.db` | SQLite path (dev; Prisma-resolved against `prisma/schema.prisma` → `<repo-root>/db/custom.db`) or PostgreSQL URL (prod; switch provider first) |
+| `DATABASE_URL` | Yes | `file:../db/custom.db` | SQLite path anchored at `prisma/schema.prisma` by `src/lib/db-path.ts` (→ `<repo>/db/custom.db` for CLI, dev, tests and e2e alike), or a PostgreSQL URL (switch the Prisma provider first); absolute `file:` URLs pass through unchanged — recommended for standalone production (see `docs/DEPLOYMENT.md`) |
 | `NEXTAUTH_SECRET` | Yes | — | Session signing secret; generate with `openssl rand -base64 32` |
 | `NEXTAUTH_URL` | Yes | `http://localhost:3000` | Canonical origin for auth callbacks/redirects |
 | `GOOGLE_CLIENT_ID` | No | — | Google OAuth client id |
@@ -733,7 +756,8 @@ never commit `.env`, `db/*.db`, logs, or scratch material.
 | `src/actions/auth.ts` | Auth-flow actions — sign-up / verify / resend / reset-request (verification challenge) |
 | `src/lib/queries.ts` | DTO types + all read functions + filter engine |
 | `src/lib/constants.ts` | Canonical filter lists, hero sentinels, neighborhoods, site facts |
-| `src/lib/db.ts` | Prisma client singleton |
+| `src/lib/db.ts` | Prisma client singleton (repo-root `datasourceUrl` via db-path) |
+| `src/lib/db-path.ts` | Repo-root SQLite resolver — schema-anchored `resolveDatabaseUrl()` shared by the app, CLI wrapper, and Playwright config |
 | `src/lib/auth.ts` | NextAuth options |
 | `src/components/site/site-header.tsx` | Scroll-hiding header (transparent at top on all routes), mobile menu |
 | `src/components/site/legal-page.tsx` | Shared legal layout — the original's verbatim Wix-template copy structure (label, hairline-opened sections, dash lists, bracket suffixes) |
@@ -748,7 +772,9 @@ never commit `.env`, `db/*.db`, logs, or scratch material.
 | `src/components/site/inquiry-form.tsx` | Lead-capture form (action-wired) |
 | `prisma/schema.prisma` | Data model |
 | `prisma/seed.ts` | Idempotent seed + demo user |
-| `playwright.config.ts` | E2E config — production standalone webServer, PROD_DIST_DIR staging, db symlink |
+| `playwright.config.ts` | E2E config — resolves DATABASE_URL, production standalone webServer, PROD_DIST_DIR staging |
+| `scripts/with-db.ts` | db-command wrapper — loads .env, resolves the repo-root SQLite path, spawns the wrapped CLI |
+| `docs/DEPLOYMENT.md` | Production deployment guide (build, env, Postgres switch, absolute-path guidance) |
 | `e2e/` | Playwright suite — fonts, titles, hero, property detail, flows |
 | `.env.example` | Environment contract |
 

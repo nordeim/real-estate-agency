@@ -19,6 +19,13 @@ README or the Project Architecture Document (PAD).
 | DB seed | `bun run db:seed` (idempotent — upserts by natural keys) |
 | Full reset | delete `db/custom.db` → `bun run db:push && bun run db:seed` |
 
+All `db:*` commands except `db:generate` run through `scripts/with-db.ts`, which
+loads `.env`, resolves the SQLite location to an absolute repo-root path via
+`src/lib/db-path.ts`, and only then spawns the wrapped command. The Prisma
+CLI/client would otherwise anchor relative `file:` URLs against the package
+root or CWD — placing `file:../db/custom.db` OUTSIDE the repo on a fresh
+clone.
+
 Gate order before considering work done: **lint → typecheck → test →
 test:e2e**, then browser-verify the affected flow (see Verification below).
 
@@ -35,9 +42,17 @@ test:e2e**, then browser-verify the affected flow (see Verification below).
   `PROD_DIST_DIR=.next-e2e`, the standalone server expects its files at
   `standalone/.next-e2e/` (not `standalone/.next/`) — static assets must be
   staged there (see `playwright.config.ts` webServer command).
-- **Prisma + SQLite.** Array columns are stored as JSON strings
-  (`Property.images`, `Property.features`) — parse with
-  `parseJsonArray()` from `src/lib/format.ts`; never `JSON.parse` inline.
+- **Prisma + SQLite.** The db file lives at `<repo>/db/custom.db`.
+  `DATABASE_URL="file:../db/custom.db"` (relative, Prisma-schema-anchored)
+  is resolved deterministically by `src/lib/db-path.ts` — the app's Prisma
+  client (`src/lib/db.ts`) and the `scripts/with-db.ts` CLI wrapper both
+  call `resolveDatabaseUrl()`, and `playwright.config.ts` exports the
+  resolved absolute URL for the e2e runner and webServer. Contract pinned
+  by `src/lib/db-path.test.ts`. Never bypass the wrapper with a bare
+  `prisma db push` — it will write outside the repo. Array columns are
+  stored as JSON strings (`Property.images`, `Property.features`) — parse
+  with `parseJsonArray()` from `src/lib/format.ts`; never `JSON.parse`
+  inline.
 - **DB client** comes from `@/lib/db` (a globalThis singleton). Never
   instantiate `new PrismaClient()` elsewhere (the e2e DB-assertions in
   `e2e/flows.spec.ts` are the one sanctioned exception — they must read the
@@ -137,9 +152,11 @@ test:e2e**, then browser-verify the affected flow (see Verification below).
   v1 `py-1.5 pl-2 pr-8` item with `span[aria-hidden]` indicator wrapper.
   Do NOT "upgrade" them to current shadcn defaults — that divergence was
   the S7-2 remediation, pinned byte-level by `e2e/primitives.spec.ts`.
-- **The original exposes NO aria-labels on chrome, filters, or form
-  fields** (logo, nav, mobile toggle, search input, filter selects,
-  inquiry/newsletter fields — none have them). The clone matches: write
+- **The original exposes NO aria-labels on chrome, filters, form fields,
+  or the hero's sentence dropdowns** (logo, nav, mobile toggle, search
+  input, filter selects, inquiry/newsletter fields, hero dropdown
+  triggers/popover/options — none have them; the hero dropdown buttons
+  carry ONLY their class, not even `type`). The clone matches: write
   e2e locators against placeholders/text/CSS, not aria-labels. The inquiry
   form also has NO `noValidate` — the original fronts the client with
   NATIVE browser validation (inputs are `required`, no custom error DOM
@@ -174,6 +191,12 @@ test:e2e**, then browser-verify the affected flow (see Verification below).
 
 - After any change, run the gate
   (`bun run lint && bun run typecheck && bun run test && bun run test:e2e`).
+- E2E tests that measure DOM straight after `page.goto` MUST
+  `waitForSelector` the element first when it lives inside the
+  /properties filter bar — `PropertiesFilters` uses `useSearchParams`
+  inside a Suspense boundary, so it streams/hydrates after the initial
+  shell and a bare evaluate races that window (the primitives spec
+  regressions from session 10 were exactly this race).
 - For UI changes, verify in a browser: home hero search → `/properties`
   filters (incl. a zero-match search → empty state + Clear Filters) →
   property detail → inquiry form (row lands in `Inquiry` table, form
